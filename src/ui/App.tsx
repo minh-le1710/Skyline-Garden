@@ -1,0 +1,45 @@
+import type { Game } from '../core/Game';
+import { GameContext, useGame } from './context';
+import { Hud } from './Hud';
+import { OrdersPanel } from './OrdersPanel';
+import { FlyLayer, LevelUpModal, Toasts } from './Overlays';
+import { PotInfo } from './PotInfo';
+import { ShopPanel } from './ShopPanel';
+import { StoragePanel } from './StoragePanel';
+import { Toolbar } from './Toolbar';
+import { ToolBanner, Tray } from './Tray';
+import { UnlockDialog } from './UnlockDialog';
+
+function Panels() {
+  const panel = useGame().ui.panel.value;
+  switch (panel) {
+    case 'shop':
+      return <ShopPanel />;
+    case 'storage':
+      return <StoragePanel />;
+    case 'orders':
+      return <OrdersPanel />;
+    case 'unlock':
+      return <UnlockDialog />;
+    default:
+      return null;
+  }
+}
+
+export function App({ game }: { game: Game }) {
+  return (
+    <GameContext.Provider value={game}>
+      <Hud />
+      <ToolBanner />
+      <Toasts />
+      <div class="bottom">
+        <PotInfo />
+        <Tray />
+        <Toolbar />
+      </div>
+      <Panels />
+      <LevelUpModal />
+      <FlyLayer />
+    </GameContext.Provider>
+  );
+}

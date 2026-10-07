@@ -1,0 +1,85 @@
+import { formatDuration, growthProgress, harvest, isReady, remainingMs, speedUp, speedUpCost } from '../game';
+import { t } from '../i18n';
+import { useGame } from './context';
+import { PLANT_ICON, PotIcon, RUBY } from './icons';
+import { plantName, potBonus, potName } from './names';
+
+/** Thẻ thông tin của chậu đang chọn. */
+export function PotInfo() {
+  const game = useGame();
+  const selected = game.ui.selected.value;
+  if (!selected) return null;
+  const pot = game.state.value.floors[selected.floor]?.slots[selected.slot];
+  if (!pot) return null;
+  const now = game.now.value;
+  const { floor, slot } = selected;
+  const close = () => (game.ui.selected.value = null);
+
+  if (!pot.plant) {
+    return (
+      <div class="pot-info" data-testid="pot-info">
+        <PotIcon potId={pot.potId} />
+        <div class="pot-info-body">
+          <strong>
+            {potName(pot.potId)} · {t('pot.info.empty')}
+          </strong>
+          <small>{potBonus(pot.potId)}</small>
+          <small>{t('pot.info.plantHint')}</small>
+        </div>
+        <button
+          class="btn primary"
+          onClick={() => {
+            close();
+            game.ui.trayOpen.value = true;
+          }}
+        >
+          {t('pot.info.plant')}
+        </button>
+        <button class="icon-btn" onClick={close} aria-label={t('common.close')}>
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  const plant = pot.plant;
+  const ready = isReady(plant, now);
+  const remaining = remainingMs(plant, now);
+  return (
+    <div class="pot-info" data-testid="pot-info">
+      <span class="pot-info-icon">{PLANT_ICON[plant.plantId]}</span>
+      <div class="pot-info-body">
+        <strong>{plantName(plant.plantId)}</strong>
+        <div class="progress">
+          <div class="progress-fill" style={{ width: `${growthProgress(plant, now) * 100}%` }} />
+        </div>
+        <small>
+          {ready ? t('pot.info.ready') : t('pot.info.remaining', { time: formatDuration(remaining) })} ·{' '}
+          {potName(pot.potId)}
+        </small>
+      </div>
+      {ready ? (
+        <button
+          class="btn primary"
+          onClick={() => {
+            close();
+            game.run((s, n) => harvest(s, floor, slot, n));
+          }}
+        >
+          {t('pot.info.harvest')}
+        </button>
+      ) : (
+        <button
+          class="btn ruby"
+          data-testid="speed-up"
+          onClick={() => game.run((s, n) => speedUp(s, floor, slot, n))}
+        >
+          {t('pot.info.speedUp')} {speedUpCost(remaining)} {RUBY}
+        </button>
+      )}
+      <button class="icon-btn" onClick={close} aria-label={t('common.close')}>
+        ✕
+      </button>
+    </div>
+  );
+}

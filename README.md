@@ -4,6 +4,19 @@ Game nông trại trên mây, đồ họa 3D low-poly, chạy trên trình duy�
 Lối chơi lấy cảm hứng từ thể loại "khu vườn trên mây": trồng cây trong chậu trên các tầng mây, thu hoạch, giao đơn hàng cho Cú, lên cấp, mở thêm tầng.
 Toàn bộ tên gọi, hình ảnh và mô hình trong game là tài nguyên riêng của dự án.
 
+![Khu vườn trên hai tầng mây](docs/screenshot.png)
+
+## Cách chơi
+
+- **Trồng:** bấm 🌱 Trồng, chọn hạt giống rồi kéo ngón tay (hoặc chuột) qua nhiều chậu liền một lượt.
+- **Thu hoạch:** cây chín có ngôi sao nhỏ lấp lánh. Chạm vào cây, hoặc bấm 🧺 Thu hoạch rồi kéo qua cả hàng.
+- **Chạm vào chậu đang lớn** để xem thời gian còn lại, hoặc dùng ruby để cây chín ngay.
+- **Đơn hàng Cú 🦉:** giao đủ nông sản để nhận vàng và XP, lời hơn bán thẳng cho cửa hàng.
+- **Kho 📦:** bán nông sản. Kho có sức chứa giới hạn, mở rộng ở Cửa hàng.
+- **Cửa hàng 🏪:** mua hạt giống, chậu (chậu gốm cộng XP, chậu sứ giúp cây lớn nhanh hơn) và mở rộng kho.
+- **Mở tầng mới:** chạm vào tầng mây mờ phía trên khi đủ cấp và vàng. Vuốt lên xuống để cuộn qua các tầng.
+- Cây vẫn lớn và đơn hàng vẫn tới khi bạn tắt game. Game tự lưu trong trình duyệt.
+
 ## Chạy thử
 
 ```bash
@@ -11,7 +24,9 @@ npm install
 npm run dev          # mở http://localhost:5173 (dùng --host để thử trên điện thoại cùng mạng)
 ```
 
-Thêm `?debug` vào URL để bật công cụ debug trong console: `__skyline.skip(60)` tua nhanh 60 giây, `__skyline.addGold(1000)`, `__skyline.reset()`.
+Thêm `?debug` vào URL để bật công cụ debug trong console: `__skyline.skip(60)` tua nhanh 60 giây, `__skyline.addGold(1000)`, `__skyline.setLevel(5)`, `__skyline.reset()`.
+
+Lần đầu chạy `npm run e2e` trên máy mới cần cài Chromium cho Playwright: `npx playwright install chromium`.
 
 ## Lệnh
 
