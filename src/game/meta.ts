@@ -41,6 +41,14 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
         add('questsCompleted', 1);
         add('goldEarned', e.reward.gold ?? 0);
         break;
+      case 'crateFilled':
+        add('cratesFilled', 1);
+        add('goldEarned', e.gold);
+        break;
+      case 'balloonSent':
+        if (e.completed) add('balloonsCompleted', 1);
+        add('goldEarned', e.reward.gold ?? 0);
+        break;
       case 'potForged':
         add('potsForged', 1);
         break;

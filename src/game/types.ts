@@ -257,6 +257,20 @@ export interface DailyState {
   loginCount: number;
 }
 
+// ---------- Khinh khí cầu ----------
+
+export interface Crate {
+  id: BarnItemId;
+  qty: number;
+  gold: number;
+  xp: number;
+  filled: boolean;
+}
+
+export type BalloonState =
+  | { phase: 'away'; returnsAt: number; trips: number }
+  | { phase: 'docked'; arrivedAt: number; leavesAt: number; crates: Crate[]; trips: number };
+
 // ---------- State ----------
 
 export interface GameState {
@@ -282,6 +296,7 @@ export interface GameState {
   rng: Record<RngStream, number>;
   stats: Counts<StatKey>;
   daily: DailyState;
+  balloon: BalloonState;
 }
 
 // ---------- Sự kiện và kết quả ----------
@@ -338,7 +353,10 @@ export type GameEvent =
   | { type: 'questClaimed'; index: number; reward: Reward }
   | { type: 'questBonusClaimed'; reward: Reward }
   | { type: 'questRerolled'; index: number; ruby: number }
-  | { type: 'crateFilled'; index: number; id: BarnItemId; qty: number; gold: number; xp: number };
+  | { type: 'crateFilled'; index: number; id: BarnItemId; qty: number; gold: number; xp: number }
+  | { type: 'balloonArrived'; crates: number }
+  | { type: 'balloonDeparted'; filled: number }
+  | { type: 'balloonSent'; completed: boolean; reward: Reward };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -374,6 +392,8 @@ export const ACTION_ERRORS = [
   'ALREADY_CLAIMED',
   'QUEST_NOT_DONE',
   'FEATURE_LOCKED',
+  'BALLOON_AWAY',
+  'CRATE_FILLED',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

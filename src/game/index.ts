@@ -7,6 +7,8 @@ export * from './machines';
 export * from './config/machines';
 export * from './config/forge';
 export * from './daily';
+export * from './balloon';
+export * from './config/balloon';
 export * from './calendar';
 export * from './config/daily';
 export * from './rewards';

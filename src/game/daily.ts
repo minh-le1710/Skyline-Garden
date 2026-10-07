@@ -1,4 +1,5 @@
 import { dayIndex } from './calendar';
+import { BALLOON_UNLOCK_LEVEL } from './config/balloon';
 import { commit, fail } from './commit';
 import {
   LOGIN_GIFTS,
@@ -27,9 +28,6 @@ interface QuestTemplate {
   requires(s: GameState): boolean;
   make(rng: Rng, s: GameState): { target: BarnItemId | null; goal: number };
 }
-
-/** Điều kiện mở nhiệm vụ giao thùng khinh khí cầu (được bật khi có khinh khí cầu). */
-export const balloonQuestsEnabled = { value: false };
 
 const TEMPLATES: QuestTemplate[] = [
   {
@@ -84,7 +82,7 @@ const TEMPLATES: QuestTemplate[] = [
   {
     kind: 'fillCrates',
     difficulty: 1.5,
-    requires: (s) => balloonQuestsEnabled.value && s.level >= 10,
+    requires: (s) => s.level >= BALLOON_UNLOCK_LEVEL,
     make: (rng) => ({ target: null, goal: rng.int(3, 5) }),
   },
   {

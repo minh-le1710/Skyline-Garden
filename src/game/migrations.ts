@@ -117,9 +117,17 @@ function v2to3(raw: Raw): Raw {
   };
 }
 
+// ---------- v3 → v4: khinh khí cầu ----------
+
+function v3to4(raw: Raw): Raw {
+  // Chuyến đầu tới ở lần tick kế tiếp (nếu đủ cấp); không dựa vào lastSeenAt.
+  return { ...raw, balloon: { phase: 'away', returnsAt: 0, trips: 0 } };
+}
+
 export const MIGRATIONS: Record<number, (raw: RawSave) => RawSave> = {
   1: v1to2,
   2: v2to3,
+  3: v3to4,
 };
 
 /** Nâng `raw` lên `target`. Trả về null nếu thiếu migration. */

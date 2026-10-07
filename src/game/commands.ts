@@ -28,6 +28,7 @@ import {
   upgradeMachine,
 } from './machines';
 import { claimLogin, claimQuest, claimQuestBonus, rerollQuest } from './daily';
+import { fillCrate, sendBalloon } from './balloon';
 import { tick } from './tick';
 import type { ActionResult, BarnItemId, GameState, MachineId, PlantId, PotId, RecipeId } from './types';
 
@@ -63,7 +64,9 @@ export type Command =
   | { type: 'claimLogin' }
   | { type: 'claimQuest'; index: number }
   | { type: 'claimQuestBonus' }
-  | { type: 'rerollQuest'; index: number };
+  | { type: 'rerollQuest'; index: number }
+  | { type: 'fillCrate'; index: number }
+  | { type: 'sendBalloon' };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -133,6 +136,10 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return claimQuestBonus(s, now);
     case 'rerollQuest':
       return rerollQuest(s, c.index, now);
+    case 'fillCrate':
+      return fillCrate(s, c.index, now);
+    case 'sendBalloon':
+      return sendBalloon(s, now);
   }
 }
 
@@ -191,6 +198,8 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   claimQuest: { index: FIELD.index },
   claimQuestBonus: {},
   rerollQuest: { index: FIELD.index },
+  fillCrate: { index: FIELD.index },
+  sendBalloon: {},
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

@@ -116,6 +116,17 @@ export function checkStructure(s: GameState): string[] {
     });
   });
 
+  const b = s.balloon;
+  expect(isNonNegInt(b?.trips), 'khinh khí cầu: số chuyến không hợp lệ');
+  if (b?.phase === 'docked') {
+    expect(b.arrivedAt <= b.leavesAt, 'khinh khí cầu: thời gian đậu sai');
+    for (const c of b.crates) {
+      expect(isBarnItemId(c.id) && isPositiveInt(c.qty) && isPositiveInt(c.gold), 'khinh khí cầu: thùng lạ');
+    }
+  } else {
+    expect(b?.phase === 'away' && Number.isFinite(b.returnsAt), 'khinh khí cầu: trạng thái lạ');
+  }
+
   expect(Array.isArray(s.orders), 'orders không phải mảng');
   for (const slot of s.orders) {
     expect(Number.isFinite(slot?.readyAt), 'thời điểm đơn mới không hợp lệ');

@@ -1,4 +1,4 @@
-import { QUEST_UNLOCK_LEVEL, loginClaimable } from '../game';
+import { BALLOON_UNLOCK_LEVEL, QUEST_UNLOCK_LEVEL, formatDuration, loginClaimable } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 
@@ -10,7 +10,7 @@ export function ChipBar() {
   const game = useGame();
   const state = game.state.value;
   const now = game.now.value;
-  const openPanel = (id: 'quests') => {
+  const openPanel = (id: 'quests' | 'balloon') => {
     game.ui.selected.value = null;
     game.ui.panel.value = id;
   };
@@ -43,6 +43,22 @@ export function ChipBar() {
             {done}/{quests.length}
           </small>
           {claimable > 0 && <span class="badge small">{claimable}</span>}
+        </button>
+      )}
+      {state.level >= BALLOON_UNLOCK_LEVEL && (
+        <button
+          class={`hud-chip ${state.balloon.phase === 'away' ? 'dim' : ''}`}
+          aria-label={t('chip.balloon')}
+          title={t('chip.balloon')}
+          onClick={() => openPanel('balloon')}
+          data-testid="chip-balloon"
+        >
+          🎈{' '}
+          <small>
+            {formatDuration(
+              state.balloon.phase === 'docked' ? state.balloon.leavesAt - now : state.balloon.returnsAt - now,
+            )}
+          </small>
         </button>
       )}
     </div>

@@ -6,6 +6,7 @@ import { MachinePanel } from './MachinePanel';
 import { OrdersPanel } from './OrdersPanel';
 import { FlyLayer, ForgeReveal, LevelUpModal, LoginModal, Toasts } from './Overlays';
 import { QuestsPanel } from './QuestsPanel';
+import { BalloonPanel } from './BalloonPanel';
 import { PotInfo } from './PotInfo';
 import { ShopPanel } from './ShopPanel';
 import { StoragePanel } from './StoragePanel';
@@ -28,6 +29,8 @@ function Panels() {
       return <MachinePanel />;
     case 'quests':
       return <QuestsPanel />;
+    case 'balloon':
+      return <BalloonPanel />;
     default:
       return null;
   }

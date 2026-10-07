@@ -21,6 +21,7 @@ import { LOGIN_GIFTS, QUEST_MATERIAL_CHANCE_PCT, QUEST_UNLOCK_LEVEL, REROLL_RUBY
 import { FORGES, RARITY_ROLLS, SALVAGE, STAT_WEIGHTS, TIME_STAT_FACTOR } from './config/forge';
 import { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES } from './config/machines';
 import { PESTS, PEST_STAY_MAX_MS, PEST_STAY_MIN_MS, PEST_UNLOCK_LEVEL } from './config/pests';
+import * as BALLOON from './config/balloon';
 import { cyrb53, stableStringify } from './hash';
 import { SAVE_VERSION } from './state';
 
@@ -32,6 +33,7 @@ export const RULES_VERSION = 1;
 
 /** Toàn bộ số liệu cân bằng game. Thêm config mới vào đây để hash phát hiện thay đổi. */
 const CONFIG = {
+  balloon: { ...BALLOON, crateCount: undefined },
   plants: PLANTS,
   goods: GOODS,
   machines: { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES },

@@ -1,4 +1,5 @@
 import { commit } from './commit';
+import { balloonDue, runBalloon } from './balloon';
 import { dailyDue, runDaily } from './daily';
 import { dueOrderSlots, fillOrders } from './orders';
 import type { ActionResult, GameEvent, GameState } from './types';
@@ -17,6 +18,7 @@ const SYSTEMS: TickSystem[] = [
   // Sang ngày trước, để nhiệm vụ ngày mới sẵn sàng khi các hệ thống khác sinh sự kiện.
   { name: 'daily', isDue: dailyDue, run: runDaily },
   { name: 'orders', isDue: (s, now) => dueOrderSlots(s, now).length > 0, run: fillOrders },
+  { name: 'balloon', isDue: balloonDue, run: runBalloon },
 ];
 
 /** Cập nhật theo thời gian. Trả về đúng object cũ nếu không có gì tới hạn (để không ghi log thừa). */

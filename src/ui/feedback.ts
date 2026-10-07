@@ -146,6 +146,17 @@ export function connectFeedback(
         for (const [id, n] of Object.entries(event.items))
           fly(ITEM_ICON[id as ItemId], `+${n}`, lastPointer, 'storage');
         break;
+      case 'balloonArrived':
+        showToast(t('toast.balloonArrived', { n: event.crates }), 'success');
+        break;
+      case 'balloonSent':
+        showToast(t('toast.balloonSent'));
+        if (event.completed) flyReward(event.reward);
+        break;
+      case 'crateFilled':
+        fly(GOLD, `+${event.gold}`, lastPointer, 'gold');
+        fly(XP, `+${event.xp}`, { x: lastPointer.x, y: lastPointer.y - 20 }, 'xp');
+        break;
       case 'questCompleted':
         showToast(t('toast.questCompleted'), 'success');
         break;

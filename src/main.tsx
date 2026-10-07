@@ -7,6 +7,7 @@ import { t } from './i18n';
 import { CameraScroller, type ScreenInsets } from './input/CameraScroller';
 import { InputController } from './input/InputController';
 import { Picker } from './input/Picker';
+import { BalloonView } from './render/BalloonView';
 import { GardenView } from './render/GardenView';
 import { floorY } from './render/layout';
 import { SceneManager } from './render/SceneManager';
@@ -45,6 +46,7 @@ function boot(): void {
   const tweens = new Tweens();
   const sky = new SkyBackground(scene.scene);
   const garden = new GardenView(scene.scene, game, tweens);
+  const balloon = new BalloonView(scene.scene, game, scene);
 
   // Phần màn hình bị HUD và thanh công cụ che, để camera không giấu tầng mây dưới UI.
   const insets: ScreenInsets = { top: 0, bottom: 0 };
@@ -92,6 +94,7 @@ function boot(): void {
     garden.update(dt, game.clock.now(), time / 1000);
     scroller.update(dt);
     sky.update(dt, scene.focusY);
+    balloon.update(dt, time / 1000);
     tweens.update(dt);
     scene.render();
     if (debug) debug.ready = true;
