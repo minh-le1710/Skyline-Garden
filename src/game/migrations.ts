@@ -124,10 +124,18 @@ function v3to4(raw: Raw): Raw {
   return { ...raw, balloon: { phase: 'away', returnsAt: 0, trips: 0 } };
 }
 
+// ---------- v4 → v5: thành tựu ----------
+
+function v4to5(raw: Raw): Raw {
+  // Thống kê trọn đời đã có từ v2; thành tựu đạt rồi sẽ hiện là "chờ nhận".
+  return { ...raw, achievements: {} };
+}
+
 export const MIGRATIONS: Record<number, (raw: RawSave) => RawSave> = {
   1: v1to2,
   2: v2to3,
   3: v3to4,
+  4: v4to5,
 };
 
 /** Nâng `raw` lên `target`. Trả về null nếu thiếu migration. */

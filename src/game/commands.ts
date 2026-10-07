@@ -16,7 +16,16 @@ import {
   unlockFloor,
   upgradeStorage,
 } from './actions';
-import { isBarnItemId, isMachineId, isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { claimAchievement } from './achievements';
+import {
+  isAchievementId,
+  isBarnItemId,
+  isMachineId,
+  isNonNegInt,
+  isPlantId,
+  isPositiveInt,
+  isPotId,
+} from './ids';
 import { recipeDef } from './machines';
 import {
   buildMachine,
@@ -30,7 +39,16 @@ import {
 import { claimLogin, claimQuest, claimQuestBonus, rerollQuest } from './daily';
 import { fillCrate, sendBalloon } from './balloon';
 import { tick } from './tick';
-import type { ActionResult, BarnItemId, GameState, MachineId, PlantId, PotId, RecipeId } from './types';
+import type {
+  AchievementId,
+  ActionResult,
+  BarnItemId,
+  GameState,
+  MachineId,
+  PlantId,
+  PotId,
+  RecipeId,
+} from './types';
 
 /**
  * Mọi thay đổi GameState đều là một lệnh. Lệnh là JSON thuần nên ghi log, gửi lên server
@@ -66,7 +84,8 @@ export type Command =
   | { type: 'claimQuestBonus' }
   | { type: 'rerollQuest'; index: number }
   | { type: 'fillCrate'; index: number }
-  | { type: 'sendBalloon' };
+  | { type: 'sendBalloon' }
+  | { type: 'claimAchievement'; id: AchievementId };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -140,6 +159,8 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return fillCrate(s, c.index, now);
     case 'sendBalloon':
       return sendBalloon(s, now);
+    case 'claimAchievement':
+      return claimAchievement(s, c.id, now);
   }
 }
 
@@ -166,6 +187,7 @@ const FIELD = {
   uid: isPositiveInt,
   qty: isPositiveInt,
   machineId: isMachineId,
+  achievementId: isAchievementId,
   recipe: (v: unknown) => typeof v === 'string' && recipeDef(v as RecipeId) !== null,
 } satisfies Record<string, FieldCheck>;
 
@@ -200,6 +222,7 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   rerollQuest: { index: FIELD.index },
   fillCrate: { index: FIELD.index },
   sendBalloon: {},
+  claimAchievement: { id: FIELD.achievementId },
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

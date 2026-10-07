@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { FORGE_IDS, GOOD_IDS, MACHINE_IDS, PLANT_IDS, type Command } from '../src/game';
+import { ACHIEVEMENT_IDS, FORGE_IDS, GOOD_IDS, MACHINE_IDS, PLANT_IDS, type Command } from '../src/game';
 
 // Bộ sinh lệnh ngẫu nhiên cho property test. Cố ý gồm cả chỉ số ngoài phạm vi để thử nhánh lỗi.
 const floor = fc.integer({ min: 0, max: 9 });
@@ -56,6 +56,19 @@ export const commandArb: fc.Arbitrary<Command> = fc.oneof(
       slot,
       toFloor: floor,
       toSlot: slot,
+    }),
+  },
+  { weight: 1, arbitrary: fc.constant({ type: 'claimLogin' as const }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('claimQuest' as const), index }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('rerollQuest' as const), index }) },
+  { weight: 1, arbitrary: fc.constant({ type: 'claimQuestBonus' as const }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('fillCrate' as const), index }) },
+  { weight: 1, arbitrary: fc.constant({ type: 'sendBalloon' as const }) },
+  {
+    weight: 1,
+    arbitrary: fc.record({
+      type: fc.constant('claimAchievement' as const),
+      id: fc.constantFrom(...ACHIEVEMENT_IDS),
     }),
   },
 );

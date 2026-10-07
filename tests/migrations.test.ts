@@ -47,7 +47,7 @@ describe('hash', () => {
   });
 
   it('RULES_HASH đổi thì phải xác nhận (cập nhật snapshot) vì server sẽ từ chối client khác luật', () => {
-    expect(RULES_HASH).toMatchInlineSnapshot(`"zbdtlcfhu3"`);
+    expect(RULES_HASH).toMatchInlineSnapshot(`"xp107y8399"`);
   });
 });
 

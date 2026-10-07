@@ -1,3 +1,4 @@
+import { checkAchievements } from './achievements';
 import { progressQuests } from './daily';
 import type { GameEvent, GameState, StatKey } from './types';
 
@@ -69,8 +70,10 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
  * Chạy sau mỗi lệnh thành công, trong cùng bản nháp: thống kê → nhiệm vụ → hướng dẫn → thành tựu.
  * Chạy đúng một lần: sự kiện do bước này sinh ra không được đưa vào lại.
  */
-export function applyMeta(draft: GameState, events: GameEvent[], _now: number): void {
+export function applyMeta(before: GameState, draft: GameState, events: GameEvent[], _now: number): void {
   recordStats(draft, events);
   const completed = progressQuests(draft, events);
   events.push(...completed);
+  // Nhận thưởng thành tựu cũng cộng vàng/XP (có thể lên cấp): vẫn kiểm tra như mọi lệnh khác.
+  checkAchievements(before, draft, events);
 }

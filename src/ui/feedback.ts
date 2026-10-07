@@ -164,7 +164,15 @@ export function connectFeedback(
       case 'loginClaimed':
       case 'questClaimed':
       case 'questBonusClaimed':
+      case 'achievementClaimed':
         flyReward(event.reward);
+        break;
+      case 'achievementUnlocked':
+        showToast(
+          t('toast.achievementUnlocked', { name: t(`ach.${event.id}.name` as const), tier: event.tier + 1 }),
+          'success',
+          4000,
+        );
         break;
       case 'machineBuilt':
         showToast(t('toast.machineBuilt', { name: machineName(event.machineId) }), 'success');

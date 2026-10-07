@@ -13,6 +13,7 @@ import {
   type PestId,
   type PlantId,
   type PotId,
+  type StatKey,
 } from './game';
 import type { CameraScroller } from './input/CameraScroller';
 import type { GardenView } from './render/GardenView';
@@ -39,6 +40,8 @@ export interface DebugApi {
   spawnPest(floor: number, slot: number, id?: PestId): void;
   /** Tặng đồ trực tiếp (chỉ để dựng tình huống test). `pots` tạo chậu cửa hàng theo loại. */
   grant(items: { seeds?: Counts<PlantId>; items?: Counts<ItemId>; pots?: Counts<PotId> }): void;
+  /** Đặt một thống kê trọn đời (để thử thành tựu). */
+  setStat(key: StatKey, value: number): void;
   reset(): void;
   screenPos(target: ScreenTarget): { x: number; y: number };
   /** @deprecated dùng screenPos({ kind: 'slot', … }) */
@@ -103,6 +106,11 @@ export function installDebug(
         const slots = orderSlotsForLevel(level);
         s.orders.length = Math.min(s.orders.length, slots);
         while (s.orders.length < slots) s.orders.push({ order: null, readyAt: 0 });
+      }),
+    setStat: (key, value) =>
+      patch((s) => {
+        if (value > 0) s.stats[key] = value;
+        else delete s.stats[key];
       }),
     grant: (items) =>
       patch((s) => {

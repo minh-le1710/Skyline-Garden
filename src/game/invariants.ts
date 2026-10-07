@@ -1,8 +1,10 @@
 import { MAX_FLOORS, SLOTS_PER_FLOOR, STORAGE_UPGRADES, storageCapacityAfter } from './config/garden';
+import { ACHIEVEMENTS } from './config/achievements';
 import { MAX_LEVEL } from './config/levels';
 import { orderSlotsForLevel } from './config/orders';
 import { POT_BAG_MAX } from './config/pots';
 import {
+  isAchievementId,
   isBarnItemId,
   isInt,
   isItemId,
@@ -22,6 +24,7 @@ import {
   QUEST_KINDS,
   RNG_STREAMS,
   STAT_KEYS,
+  type AchievementId,
   type Counts,
   type GameState,
   type PotInstance,
@@ -61,6 +64,7 @@ export function checkStructure(s: GameState): string[] {
   checkCounts('seeds', s.seeds, isPlantId);
   checkCounts('items', s.items, isItemId);
   checkCounts('stats', s.stats, (k) => STAT_KEYS.includes(k as never));
+  checkCounts('achievements', s.achievements ?? {}, isAchievementId);
   for (const stream of RNG_STREAMS) {
     const v = s.rng?.[stream];
     expect(isNonNegInt(v) && v <= 0xffffffff, `rng.${stream} không hợp lệ`);
@@ -203,6 +207,9 @@ export function checkBalance(s: GameState): string[] {
   expect(s.potBag.length <= POT_BAG_MAX, `kho chậu vượt ${POT_BAG_MAX}`);
   expect(s.floors.length <= MAX_FLOORS, `số tầng vượt tối đa: ${s.floors.length}`);
   expect(s.orders.length >= orderSlotsForLevel(s.level), `bảng đơn chỉ có ${s.orders.length} chỗ`);
+  for (const [id, n] of Object.entries(s.achievements) as [AchievementId, number][]) {
+    expect(n <= ACHIEVEMENTS[id].tiers.length, `thành tựu ${id}: nhận ${n} bậc, vượt số bậc`);
+  }
   return errors;
 }
 
@@ -225,5 +232,9 @@ export function normalizeLoaded(s: GameState, now: number): GameState {
   out.storageUpgrades = Math.min(out.storageUpgrades, STORAGE_UPGRADES.length);
   out.storageCapacity = storageCapacityAfter(out.storageUpgrades);
   while (out.orders.length < orderSlotsForLevel(out.level)) out.orders.push({ order: null, readyAt: now });
+  // Bảng thành tựu bớt bậc sau này: kẹp lại, không coi save là hỏng.
+  for (const [id, n] of Object.entries(out.achievements) as [AchievementId, number][]) {
+    out.achievements[id] = Math.min(n, ACHIEVEMENTS[id].tiers.length);
+  }
   return out;
 }

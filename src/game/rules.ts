@@ -22,6 +22,7 @@ import { FORGES, RARITY_ROLLS, SALVAGE, STAT_WEIGHTS, TIME_STAT_FACTOR } from '.
 import { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES } from './config/machines';
 import { PESTS, PEST_STAY_MAX_MS, PEST_STAY_MIN_MS, PEST_UNLOCK_LEVEL } from './config/pests';
 import * as BALLOON from './config/balloon';
+import { ACHIEVEMENTS } from './config/achievements';
 import { cyrb53, stableStringify } from './hash';
 import { SAVE_VERSION } from './state';
 
@@ -33,6 +34,7 @@ export const RULES_VERSION = 1;
 
 /** Toàn bộ số liệu cân bằng game. Thêm config mới vào đây để hash phát hiện thay đổi. */
 const CONFIG = {
+  achievements: ACHIEVEMENTS,
   balloon: { ...BALLOON, crateCount: undefined },
   plants: PLANTS,
   goods: GOODS,

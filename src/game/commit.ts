@@ -13,6 +13,6 @@ export function commit(
   const draft = structuredClone(state);
   const events: GameEvent[] = [];
   mutate(draft, events);
-  applyMeta(draft, events, now);
+  applyMeta(state, draft, events, now);
   return { ok: true, state: draft, events };
 }

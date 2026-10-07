@@ -76,7 +76,18 @@ export function saveGame(storage: KeyValueStore, state: GameState): void {
 
 /** Kiểm tra cấu trúc (không phụ thuộc số liệu cân bằng), để save hỏng hoặc bị sửa tay không làm sập game. */
 function shapeProblems(d: Record<string, unknown>): string | null {
-  const required = ['floors', 'orders', 'seeds', 'items', 'potBag', 'rng', 'stats', 'daily', 'balloon'];
+  const required = [
+    'floors',
+    'orders',
+    'seeds',
+    'items',
+    'potBag',
+    'rng',
+    'stats',
+    'daily',
+    'balloon',
+    'achievements',
+  ];
   for (const key of required) if (!(key in d)) return `thiếu trường ${key}`;
   if (!Array.isArray(d.floors) || !d.floors.every((f) => isRecord(f) && Array.isArray(f.slots))) {
     return 'floors không hợp lệ';
@@ -84,7 +95,7 @@ function shapeProblems(d: Record<string, unknown>): string | null {
   if (
     !Array.isArray(d.orders) ||
     !Array.isArray(d.potBag) ||
-    ![d.seeds, d.items, d.rng, d.stats, d.daily, d.balloon].every(isRecord)
+    ![d.seeds, d.items, d.rng, d.stats, d.daily, d.balloon, d.achievements].every(isRecord)
   ) {
     return 'kho không hợp lệ';
   }

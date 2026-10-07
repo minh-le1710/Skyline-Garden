@@ -22,7 +22,7 @@ import {
   type SlotContent,
 } from './types';
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export function emptyFloor(): Floor {
   return { slots: Array.from({ length: SLOTS_PER_FLOOR }, () => null) };
@@ -75,6 +75,7 @@ export function createNewGame(now: number, seed: number): GameState {
     stats: {},
     daily: { day: -1, quests: [], bonusClaimed: false, freeRerollUsed: false, loginDay: -1, loginCount: 0 },
     balloon: { phase: 'away', returnsAt: 0, trips: 0 },
+    achievements: {},
   };
 }
 

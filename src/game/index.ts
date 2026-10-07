@@ -35,3 +35,5 @@ export * from './config/materials';
 export * from './config/garden';
 export * from './config/levels';
 export * from './config/orders';
+export * from './achievements';
+export * from './config/achievements';

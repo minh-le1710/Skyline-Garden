@@ -35,7 +35,7 @@ export type Tool =
   | { kind: 'move'; from: SlotRef | null };
 
 export type PanelId =
-  'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests' | 'balloon' | 'settings';
+  'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests' | 'balloon' | 'achievements' | 'settings';
 export type ScreenId = 'garden' | 'mine';
 export type ShopTab = 'seeds' | 'pots' | 'machines' | 'upgrades';
 export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';

@@ -1,4 +1,10 @@
-import { BALLOON_UNLOCK_LEVEL, QUEST_UNLOCK_LEVEL, formatDuration, loginClaimable } from '../game';
+import {
+  BALLOON_UNLOCK_LEVEL,
+  QUEST_UNLOCK_LEVEL,
+  claimableCount,
+  formatDuration,
+  loginClaimable,
+} from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 
@@ -10,7 +16,7 @@ export function ChipBar() {
   const game = useGame();
   const state = game.state.value;
   const now = game.now.value;
-  const openPanel = (id: 'quests' | 'balloon' | 'settings') => {
+  const openPanel = (id: 'quests' | 'balloon' | 'achievements' | 'settings') => {
     game.ui.selected.value = null;
     game.ui.panel.value = id;
   };
@@ -18,6 +24,7 @@ export function ChipBar() {
   const claimable = quests.filter((q) => !q.claimed && q.progress >= q.goal).length;
   const done = quests.filter((q) => q.progress >= q.goal).length;
   const loginReady = loginClaimable(state, now);
+  const achievements = claimableCount(state);
   const balloonMs =
     state.balloon.phase === 'docked' ? state.balloon.leavesAt - now : state.balloon.returnsAt - now;
   const questsLabel =
@@ -68,6 +75,22 @@ export function ChipBar() {
           <span aria-hidden="true">🎈</span> <small aria-hidden="true">{formatDuration(balloonMs)}</small>
         </button>
       )}
+      <button
+        class={`hud-chip ${achievements > 0 ? 'pulse' : ''}`}
+        aria-label={
+          t('chip.achievements') + (achievements > 0 ? `, ${t('chip.claimable', { n: achievements })}` : '')
+        }
+        title={t('chip.achievements')}
+        onClick={() => openPanel('achievements')}
+        data-testid="chip-achievements"
+      >
+        <span aria-hidden="true">🏆</span>
+        {achievements > 0 && (
+          <span class="badge small" aria-hidden="true">
+            {achievements}
+          </span>
+        )}
+      </button>
       <button
         class="hud-chip"
         aria-label={t('chip.settings')}

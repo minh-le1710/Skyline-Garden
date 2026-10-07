@@ -1304,3 +1304,45 @@ h3 {
   pointer-events: none;
   white-space: pre;
 }
+
+/* ---------- Thành tựu ---------- */
+.achievement-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.achievement {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  text-align: left;
+}
+.achievement.done {
+  opacity: 0.7;
+}
+.achievement-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.achievement .stars {
+  color: #d5dbe6;
+  letter-spacing: 1px;
+}
+.achievement .stars .on {
+  color: #f5b301;
+}
+.achievement-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.achievement-foot .reward-chips {
+  flex: 1;
+}

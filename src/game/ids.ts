@@ -2,9 +2,11 @@ import { GOODS } from './config/goods';
 import { ITEMS, isBarnItem } from './config/items';
 import { PLANTS } from './config/plants';
 import {
+  ACHIEVEMENT_IDS,
   MACHINE_IDS,
   POT_IDS,
   RARITIES,
+  type AchievementId,
   type BarnItemId,
   type GoodId,
   type ItemId,
@@ -27,6 +29,7 @@ export const isBarnItemId = (id: unknown): id is BarnItemId => isItemId(id) && i
 export const isPotId = (id: unknown): id is PotId => inList(POT_IDS, id);
 export const isMachineId = (id: unknown): id is MachineId => inList(MACHINE_IDS, id);
 export const isRarity = (id: unknown): id is Rarity => inList(RARITIES, id);
+export const isAchievementId = (id: unknown): id is AchievementId => inList(ACHIEVEMENT_IDS, id);
 
 export const isInt = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n);
 export const isNonNegInt = (n: unknown): n is number => isInt(n) && n >= 0;

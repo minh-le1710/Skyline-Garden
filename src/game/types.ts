@@ -129,6 +129,21 @@ export const STAT_KEYS = [
 ] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
+/** Thành tựu. Thêm thành tựu mới không cần tăng version save (state lưu dạng map). */
+export const ACHIEVEMENT_IDS = [
+  'green_thumb',
+  'owl_friend',
+  'merchant',
+  'sky_architect',
+  'rising_star',
+  'bug_buster',
+  'artisan',
+  'potter',
+  'balloonist',
+  'dedicated',
+] as const;
+export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
+
 export const PEST_IDS = ['caterpillar', 'snail', 'beetle', 'starmoth'] as const;
 export type PestId = (typeof PEST_IDS)[number];
 
@@ -297,6 +312,8 @@ export interface GameState {
   stats: Counts<StatKey>;
   daily: DailyState;
   balloon: BalloonState;
+  /** Số bậc đã nhận thưởng của mỗi thành tựu. */
+  achievements: Counts<AchievementId>;
 }
 
 // ---------- Sự kiện và kết quả ----------
@@ -356,7 +373,10 @@ export type GameEvent =
   | { type: 'crateFilled'; index: number; id: BarnItemId; qty: number; gold: number; xp: number }
   | { type: 'balloonArrived'; crates: number }
   | { type: 'balloonDeparted'; filled: number }
-  | { type: 'balloonSent'; completed: boolean; reward: Reward };
+  | { type: 'balloonSent'; completed: boolean; reward: Reward }
+  /** Vừa đạt một bậc thành tựu (chưa nhận thưởng). `tier` tính từ 0. */
+  | { type: 'achievementUnlocked'; id: AchievementId; tier: number }
+  | { type: 'achievementClaimed'; id: AchievementId; tier: number; reward: Reward };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -394,6 +414,7 @@ export const ACTION_ERRORS = [
   'FEATURE_LOCKED',
   'BALLOON_AWAY',
   'CRATE_FILLED',
+  'NOT_ACHIEVED',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

@@ -1,0 +1,145 @@
+{
+  "version": 5,
+  "createdAt": 1700000000000,
+  "lastSeenAt": 1700000000000,
+  "gold": 100,
+  "ruby": 5,
+  "xp": 0,
+  "level": 1,
+  "floors": [
+    {
+      "slots": [
+        {
+          "kind": "pot",
+          "uid": 1,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 2,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 3,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 4,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 5,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 6,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        }
+      ]
+    },
+    {
+      "slots": [
+        {
+          "kind": "pot",
+          "uid": 7,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 8,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        null,
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "seeds": {
+    "rose": 6,
+    "sunflower": 2
+  },
+  "items": {},
+  "potBag": [],
+  "nextUid": 9,
+  "storageCapacity": 50,
+  "storageUpgrades": 0,
+  "orders": [
+    {
+      "order": null,
+      "readyAt": 1700000000000
+    },
+    {
+      "order": null,
+      "readyAt": 1700000000000
+    },
+    {
+      "order": null,
+      "readyAt": 1700000000000
+    }
+  ],
+  "nextOrderId": 1,
+  "rng": {
+    "orders": 1,
+    "crops": 2978359819,
+    "loot": 2778470109,
+    "forge": 2970219734,
+    "daily": 336991638,
+    "balloon": 913212942,
+    "mine": 4217906108,
+    "pet": 560747269,
+    "npc": 663478378
+  },
+  "stats": {},
+  "daily": {
+    "day": -1,
+    "quests": [],
+    "bonusClaimed": false,
+    "freeRerollUsed": false,
+    "loginDay": -1,
+    "loginCount": 0
+  },
+  "balloon": {
+    "phase": "away",
+    "returnsAt": 0,
+    "trips": 0
+  },
+  "achievements": {}
+}
