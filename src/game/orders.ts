@@ -6,27 +6,40 @@ import {
   orderQtyRange,
 } from './config/orders';
 import { PLANTS } from './config/plants';
+import { producibleGoods } from './machines';
 import { unlockedPlants } from './progression';
 import { withRng, type Rng } from './rng';
 import { count } from './state';
 import type { BarnItemId, GameEvent, GameState, Order, OrderItem } from './types';
 
-/** Những món có thể xuất hiện trong đơn hàng ở trạng thái hiện tại. */
-export function orderPool(state: GameState): BarnItemId[] {
-  return unlockedPlants(state.level);
+export interface OrderPool {
+  crops: BarnItemId[];
+  goods: BarnItemId[];
 }
+
+/** Những món có thể xuất hiện trong đơn hàng: cây đã mở và hàng chế biến làm được. */
+export function orderPool(state: GameState): OrderPool {
+  return { crops: unlockedPlants(state.level), goods: producibleGoods(state) };
+}
+
+/** Tỉ lệ (0..1) mỗi món trong đơn là hàng chế biến, nếu người chơi đã có máy. */
+const ORDER_GOODS_SHARE = 0.35;
 
 function qtyRange(id: BarnItemId): [number, number] {
   return ITEMS[id].kind === 'crop' ? orderQtyRange(PLANTS[id as keyof typeof PLANTS].growSec) : [1, 2];
 }
 
-export function generateOrder(rng: Rng, pool: readonly BarnItemId[], id: number): Order {
-  const itemCount = rng.int(1, Math.min(MAX_ITEMS_PER_ORDER, pool.length));
+export function generateOrder(rng: Rng, pool: OrderPool, id: number): Order {
+  const crops = [...pool.crops];
+  const goods = [...pool.goods];
+  const itemCount = rng.int(1, Math.min(MAX_ITEMS_PER_ORDER, crops.length + goods.length));
   const items: OrderItem[] = [];
-  const remaining = [...pool];
   for (let i = 0; i < itemCount; i++) {
-    const itemId = rng.pick(remaining);
-    remaining.splice(remaining.indexOf(itemId), 1);
+    // Luôn rút số "chọn loại" để luồng tiến đều dù có máy hay chưa.
+    const wantGood = rng.next() < ORDER_GOODS_SHARE;
+    const list = (wantGood && goods.length) || !crops.length ? goods : crops;
+    const itemId = rng.pick(list);
+    list.splice(list.indexOf(itemId), 1);
     const [min, max] = qtyRange(itemId);
     items.push({ id: itemId, qty: rng.int(min, max) });
   }

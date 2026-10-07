@@ -13,9 +13,19 @@ import {
   unlockFloor,
   upgradeStorage,
 } from './actions';
-import { isBarnItemId, isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { isBarnItemId, isMachineId, isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { recipeDef } from './machines';
+import {
+  buildMachine,
+  cancelJob,
+  collectMachine,
+  speedUpMachine,
+  startJob,
+  swapSlots,
+  upgradeMachine,
+} from './machines';
 import { tick } from './tick';
-import type { ActionResult, BarnItemId, GameState, PlantId, PotId } from './types';
+import type { ActionResult, BarnItemId, GameState, MachineId, PlantId, PotId, RecipeId } from './types';
 
 /**
  * Mọi thay đổi GameState đều là một lệnh. Lệnh là JSON thuần nên ghi log, gửi lên server
@@ -35,7 +45,14 @@ export type Command =
   | { type: 'upgradeStorage' }
   | { type: 'unlockFloor' }
   | { type: 'deliverOrder'; index: number }
-  | { type: 'discardOrder'; index: number };
+  | { type: 'discardOrder'; index: number }
+  | { type: 'buildMachine'; machineId: MachineId; floor: number; slot: number }
+  | { type: 'startJob'; floor: number; slot: number; recipe: RecipeId }
+  | { type: 'collectMachine'; floor: number; slot: number }
+  | { type: 'speedUpMachine'; floor: number; slot: number }
+  | { type: 'cancelJob'; floor: number; slot: number; index: number }
+  | { type: 'upgradeMachine'; floor: number; slot: number }
+  | { type: 'swapSlots'; floor: number; slot: number; toFloor: number; toSlot: number };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -77,6 +94,20 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return deliverOrder(s, c.index, now);
     case 'discardOrder':
       return discardOrder(s, c.index, now);
+    case 'buildMachine':
+      return buildMachine(s, c.machineId, c.floor, c.slot, now);
+    case 'startJob':
+      return startJob(s, c.floor, c.slot, c.recipe, now);
+    case 'collectMachine':
+      return collectMachine(s, c.floor, c.slot, now);
+    case 'speedUpMachine':
+      return speedUpMachine(s, c.floor, c.slot, now);
+    case 'cancelJob':
+      return cancelJob(s, c.floor, c.slot, c.index, now);
+    case 'upgradeMachine':
+      return upgradeMachine(s, c.floor, c.slot, now);
+    case 'swapSlots':
+      return swapSlots(s, c.floor, c.slot, c.toFloor, c.toSlot, now);
   }
 }
 
@@ -102,6 +133,8 @@ const FIELD = {
   index: isNonNegInt,
   uid: isPositiveInt,
   qty: isPositiveInt,
+  machineId: isMachineId,
+  recipe: (v: unknown) => typeof v === 'string' && recipeDef(v as RecipeId) !== null,
 } satisfies Record<string, FieldCheck>;
 
 const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, FieldCheck> } = {
@@ -119,6 +152,13 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   unlockFloor: {},
   deliverOrder: { index: FIELD.index },
   discardOrder: { index: FIELD.index },
+  buildMachine: { machineId: FIELD.machineId, floor: FIELD.index, slot: FIELD.index },
+  startJob: { floor: FIELD.index, slot: FIELD.index, recipe: FIELD.recipe },
+  collectMachine: { floor: FIELD.index, slot: FIELD.index },
+  speedUpMachine: { floor: FIELD.index, slot: FIELD.index },
+  cancelJob: { floor: FIELD.index, slot: FIELD.index, index: FIELD.index },
+  upgradeMachine: { floor: FIELD.index, slot: FIELD.index },
+  swapSlots: { floor: FIELD.index, slot: FIELD.index, toFloor: FIELD.index, toSlot: FIELD.index },
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

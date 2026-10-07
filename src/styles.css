@@ -959,3 +959,60 @@ h3 {
   background: var(--danger);
   color: #fff;
 }
+
+.queue {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 14px;
+  background: #fff;
+  border: 2px solid var(--panel-edge);
+}
+
+.queue-item.done {
+  border-color: var(--accent);
+  background: #f2fbf3;
+}
+
+.queue-icon {
+  font-size: 24px;
+}
+
+.queue-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.btn.small {
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.btn.wide {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.inputs .missing {
+  color: var(--danger);
+  font-weight: 800;
+}

@@ -28,7 +28,14 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
         add('goldEarned', e.gold);
         break;
       case 'speedUp':
+      case 'machineSpeedUp':
         add('rubySpent', e.ruby);
+        break;
+      case 'goodsCollected':
+        add(
+          'goodsMade',
+          Object.values(e.items).reduce<number>((a, b) => a + (b ?? 0), 0),
+        );
         break;
     }
   }

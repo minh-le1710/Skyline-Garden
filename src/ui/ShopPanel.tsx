@@ -1,12 +1,22 @@
-import { PLANT_LIST, SHOP_POT_LIST, count, hasItems, nextStorageUpgrade, type ItemId } from '../game';
+import {
+  PLANT_LIST,
+  SHOP_POT_LIST,
+  count,
+  hasItems,
+  nextStorageUpgrade,
+  type ItemId,
+  MACHINE_LIST,
+  ownsMachine,
+  recipesFor,
+} from '../game';
 import { formatNumber, t } from '../i18n';
 import type { ShopTab } from '../core/Game';
 import { useGame } from './context';
 import { GOLD, ITEM_ICON, PotIcon } from './icons';
-import { humanDuration, itemName, plantName, potName, potStatsText, rarityName } from './names';
+import { humanDuration, itemName, machineName, plantName, potName, potStatsText, rarityName } from './names';
 import { Sheet } from './Sheet';
 
-const TABS: ShopTab[] = ['seeds', 'pots', 'upgrades'];
+const TABS: ShopTab[] = ['seeds', 'pots', 'machines', 'upgrades'];
 
 export function ShopPanel() {
   const game = useGame();
@@ -102,6 +112,52 @@ export function ShopPanel() {
                     {t('shop.buy')}
                     <small>
                       {GOLD} {formatNumber(p.price)}
+                    </small>
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {shopTab.value === 'machines' && (
+        <ul class="card-list">
+          {MACHINE_LIST.map((m) => {
+            const locked = state.level < m.unlockLevel;
+            const owned = ownsMachine(state, m.id);
+            return (
+              <li key={m.id} class={`card ${locked ? 'locked' : ''}`} data-testid={`shop-machine-${m.id}`}>
+                <span class="card-icon">⚙️</span>
+                <div class="card-body">
+                  <strong>{machineName(m.id)}</strong>
+                  <small>
+                    {t('machine.makes', {
+                      list: recipesFor(m.id)
+                        .map((r) => ITEM_ICON[r as ItemId] ?? '🎁')
+                        .join(' '),
+                    })}
+                  </small>
+                </div>
+                {locked ? (
+                  <span class="lock-note">{t('shop.unlockAt', { n: m.unlockLevel })}</span>
+                ) : owned ? (
+                  <span class="lock-note">{t('shop.machineOwned')}</span>
+                ) : (
+                  <button
+                    class="btn gold"
+                    disabled={state.gold < m.price}
+                    onClick={() => {
+                      // Chọn ô trống để đặt; tiền chỉ bị trừ khi đặt thành công.
+                      game.ui.tool.value = { kind: 'machine', machineId: m.id };
+                      game.ui.trayOpen.value = false;
+                      close();
+                    }}
+                    data-testid={`buy-machine-${m.id}`}
+                  >
+                    {t('shop.buy')}
+                    <small>
+                      {GOLD} {formatNumber(m.price)}
                     </small>
                   </button>
                 )}

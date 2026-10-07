@@ -18,7 +18,10 @@ import {
   asPot,
   growthProgress,
   isNibbled,
+  machineStatus,
   type GameState,
+  type ItemId,
+  type Machine,
   type PlantId,
   type PlantedCrop,
   type SlotContent,
@@ -40,8 +43,11 @@ import {
   alertBubble,
   buildMachine,
   buildPest,
+  iconBubble,
+  type MachineModel,
   type PestModel,
 } from './models';
+import { ITEM_ICON } from '../ui/itemIcons';
 import { easeOutBack, type Tweens } from './tween';
 
 const SPROUT_END = 0.25;
@@ -57,6 +63,7 @@ class SlotView {
   private sparkle: Mesh | null = null;
   private stage = -1;
   private pest: { model: PestModel; bubble: Sprite } | null = null;
+  private machine: { model: MachineModel; bubble: Sprite | null; icon: string } | null = null;
   private nibbledShown = false;
   /** Bật hiệu ứng "nảy" khi đổi giai đoạn; tắt cho lần dựng đầu tiên lúc tải game. */
   private animateNextStage = false;
@@ -84,6 +91,7 @@ class SlotView {
     this.key = key;
 
     if (baseChanged) {
+      this.machine = null;
       this.group.remove(this.content);
       this.content = new Group();
       this.group.add(this.content);
@@ -94,7 +102,9 @@ class SlotView {
         this.content.add(blobShadow(), buildPot(content.potId, content.rarity));
         if (animate) this.pop(this.content, 0.4);
       } else {
-        this.content.add(blobShadow(0.7), buildMachine(content.machineId));
+        const model = buildMachine(content.machineId);
+        this.machine = { model, bubble: null, icon: '' };
+        this.content.add(blobShadow(0.7), model.root);
         if (animate) this.pop(this.content, 0.4);
       }
     }
@@ -120,6 +130,10 @@ class SlotView {
   }
 
   update(content: SlotContent | null, now: number, time: number): void {
+    if (content?.kind === 'machine') {
+      this.updateMachine(content, now, time);
+      return;
+    }
     const plant = asPot(content)?.plant;
     if (!plant || !this.model || !this.plantRoot) return;
     const p = growthProgress(plant, now);
@@ -153,6 +167,25 @@ class SlotView {
       }
     }
     this.updatePest(plant, now, time);
+  }
+
+  private updateMachine(m: Machine, now: number, time: number): void {
+    if (!this.machine) return;
+    const status = machineStatus(m, now);
+    this.machine.model.animate(time + this.phase, status.running !== null);
+    // Bong bóng hiện biểu tượng món đã làm xong, chờ người chơi lấy.
+    const icon = status.readyCount > 0 ? (ITEM_ICON[m.queue[0]!.recipe as ItemId] ?? '🎁') : '';
+    if (icon !== this.machine.icon) {
+      if (this.machine.bubble) this.content.remove(this.machine.bubble);
+      this.machine.bubble = icon ? iconBubble(icon) : null;
+      if (this.machine.bubble) {
+        this.machine.bubble.position.set(0, 1.55, 0.2);
+        this.content.add(this.machine.bubble);
+      }
+      this.machine.icon = icon;
+    }
+    if (this.machine.bubble)
+      this.machine.bubble.position.y = 1.5 + Math.abs(Math.sin(time * 3 + this.phase)) * 0.1;
   }
 
   private updatePest(plant: PlantedCrop, now: number, time: number): void {

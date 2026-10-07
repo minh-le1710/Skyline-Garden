@@ -14,6 +14,7 @@ const DRAG_QUIET: ActionError[] = [
   'NOTHING_PLANTED',
   'SLOT_OCCUPIED',
   'NOT_A_POT',
+  'NOTHING_TO_COLLECT',
 ];
 
 type Mode = 'idle' | 'pending' | 'scroll' | 'tool';
@@ -125,6 +126,8 @@ export class InputController {
   }
 
   private applyTool(tool: Tool, floor: number, slot: number, dragging: boolean): void {
+    // Đặt máy và di chuyển chỉ tính lần chạm, không áp dụng dọc đường kéo.
+    if (dragging && (tool.kind === 'machine' || tool.kind === 'move')) return;
     const key = `${floor}:${slot}`;
     if (this.visited.has(key)) return;
     this.visited.add(key);
@@ -134,14 +137,47 @@ export class InputController {
       result = this.game.exec({ type: 'plant', floor, slot, plantId: tool.plantId }, { quiet });
     } else if (tool.kind === 'harvest') {
       result = this.game.exec({ type: 'sweep', floor, slot }, { quiet });
-    } else {
+    } else if (tool.kind === 'pot') {
       // Mỗi ô lấy chiếc kế tiếp trong chồng chậu đang cầm.
       const uid = nextUidInStack(this.game.state.value, tool.stack);
       if (uid === null) return;
       result = this.game.exec({ type: 'placePot', floor, slot, uid }, { quiet });
+    } else if (tool.kind === 'machine') {
+      result = this.game.exec({ type: 'buildMachine', machineId: tool.machineId, floor, slot });
+      if (result.ok) this.game.ui.tool.value = null;
+    } else {
+      this.applyMove(tool.from, floor, slot);
+      return;
     }
     // Mỗi loại lỗi chỉ báo một lần trong một lần kéo.
     if (!result.ok) this.reported.add(result.error);
+  }
+
+  /** Công cụ di chuyển: lần chạm đầu chọn ô nguồn (phải có chậu/máy), lần sau đổi chỗ với ô đích. */
+  private applyMove(from: { floor: number; slot: number } | null, floor: number, slot: number): void {
+    const ui = this.game.ui;
+    if (!from) {
+      if (!this.game.state.value.floors[floor]?.slots[slot]) return;
+      ui.tool.value = { kind: 'move', from: { floor, slot } };
+      ui.selected.value = { floor, slot };
+      return;
+    }
+    if (from.floor === floor && from.slot === slot) {
+      ui.tool.value = null;
+      ui.selected.value = null;
+      return;
+    }
+    const r = this.game.exec({
+      type: 'swapSlots',
+      floor: from.floor,
+      slot: from.slot,
+      toFloor: floor,
+      toSlot: slot,
+    });
+    if (r.ok) {
+      ui.tool.value = null;
+      ui.selected.value = null;
+    }
   }
 
   private onTap(target: PickTarget | null): void {
@@ -168,6 +204,12 @@ export class InputController {
     }
     // Chạm vào ô: bắt sâu / thu hoạch nếu có việc; không có việc gì thì chọn ô để xem thông tin.
     const swept = this.game.exec({ type: 'sweep', floor, slot }, { quiet: ['NOT_READY', 'NOTHING_TO_DO'] });
+    if (content.kind === 'machine') {
+      // Máy: lấy hàng xong (nếu có) rồi mở bảng điều khiển máy.
+      ui.selected.value = { floor, slot };
+      ui.panel.value = 'machine';
+      return;
+    }
     if (swept.ok) {
       const pot = asPot(this.game.state.value.floors[floor]?.slots[slot]);
       if (!pot?.plant) ui.selected.value = null;

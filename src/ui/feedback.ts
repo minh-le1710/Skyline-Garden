@@ -3,7 +3,7 @@ import type { Game } from '../core/Game';
 import type { ItemId } from '../game';
 import { t } from '../i18n';
 import { GOLD, ITEM_ICON, XP } from './icons';
-import { plantName, potName } from './names';
+import { machineName, plantName, potName } from './names';
 
 // Phản hồi cho người chơi: thông báo ngắn (toast), biểu tượng bay về HUD, hộp thoại lên cấp.
 
@@ -116,6 +116,22 @@ export function connectFeedback(
         showToast(t('toast.needPot'));
         game.ui.shopTab.value = 'pots';
         game.ui.panel.value = 'shop';
+        break;
+      case 'goodsCollected': {
+        const from = slotScreenPosition(event.floor, event.slot);
+        for (const [id, n] of Object.entries(event.items))
+          fly(ITEM_ICON[id as ItemId], `+${n}`, from, 'storage');
+        fly(XP, `+${event.xp}`, { x: from.x, y: from.y - 24 }, 'xp');
+        break;
+      }
+      case 'machineBuilt':
+        showToast(t('toast.machineBuilt', { name: machineName(event.machineId) }), 'success');
+        break;
+      case 'machineUpgraded':
+        showToast(
+          t('toast.machineUpgraded', { name: machineName(event.machineId), n: event.level }),
+          'success',
+        );
         break;
       case 'levelUp': {
         // Lên nhiều cấp một lúc thì gộp phần thưởng, hiện cấp cao nhất.

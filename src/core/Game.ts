@@ -14,6 +14,7 @@ import {
   type Command,
   type GameEvent,
   type GameState,
+  type MachineId,
   type OfflineSummary,
   type PlantId,
 } from '../game';
@@ -26,10 +27,14 @@ export type Tool =
   | { kind: 'seed'; plantId: PlantId }
   /** Đặt chậu từ một chồng trong khay (các chậu giống hệt nhau). */
   | { kind: 'pot'; stack: string }
-  | { kind: 'harvest' };
+  | { kind: 'harvest' }
+  /** Vừa mua máy: chạm vào ô trống để đặt. */
+  | { kind: 'machine'; machineId: MachineId }
+  /** Di chuyển chậu/máy: chạm ô nguồn rồi ô đích. */
+  | { kind: 'move'; from: SlotRef | null };
 
-export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock';
-export type ShopTab = 'seeds' | 'pots' | 'upgrades';
+export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock' | 'machine';
+export type ShopTab = 'seeds' | 'pots' | 'machines' | 'upgrades';
 export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';
 
 export interface SlotRef {

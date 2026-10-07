@@ -2,7 +2,7 @@ import { count, potStacks, unlockedPlants } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 import { ITEM_ICON, PotIcon } from './icons';
-import { plantName, potName, potStatsText, rarityName } from './names';
+import { machineName, plantName, potName, potStatsText, rarityName } from './names';
 
 /** Khay chọn hạt giống / chậu, hiện phía trên thanh công cụ. */
 export function Tray() {
@@ -83,6 +83,10 @@ export function ToolBanner() {
     const stack = potStacks(state).find((s) => s.key === tool.stack);
     const name = stack ? potName(stack.sample.potId) : '';
     text = t('tool.pot', { name, n: stack?.uids.length ?? 0 });
+  } else if (tool.kind === 'machine') {
+    text = t('tool.machine', { name: machineName(tool.machineId) });
+  } else if (tool.kind === 'move') {
+    text = t(tool.from ? 'tool.moveTo' : 'tool.moveFrom');
   } else {
     text = t('tool.harvest');
   }
@@ -93,6 +97,7 @@ export function ToolBanner() {
         onClick={() => {
           game.ui.tool.value = null;
           game.ui.trayOpen.value = false;
+          game.ui.selected.value = null;
         }}
       >
         {t('tool.done')}

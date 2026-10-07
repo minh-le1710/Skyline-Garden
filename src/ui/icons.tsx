@@ -1,53 +1,7 @@
-import type { ItemId, PotId, Rarity } from '../game';
+import type { PotId, Rarity } from '../game';
 
-export const ITEM_ICON: Record<ItemId, string> = {
-  rose: '🌹',
-  sunflower: '🌻',
-  strawberry: '🍓',
-  mint: '🌿',
-  lavender: '🪻',
-  tea: '🍃',
-  lily: '🌷',
-  apple: '🍎',
-  cotton: '☁️',
-  banana: '🍌',
-  lotus: '🪷',
-  coconut: '🥥',
-  cocoa: '🫘',
-  dragonfruit: '🐉',
-  vanilla: '🌼',
-  starfruit: '⭐',
-  rose_water: '🧴',
-  mint_oil: '🧪',
-  lavender_oil: '💜',
-  lotus_essence: '🫙',
-  strawberry_jam: '🍯',
-  apple_jam: '🥫',
-  dragonfruit_jam: '🍮',
-  roasted_seeds: '🌰',
-  green_tea: '🍵',
-  mint_tea: '🫖',
-  lotus_tea: '🧋',
-  yarn: '🧶',
-  cloth: '🧣',
-  scented_sachet: '👝',
-  apple_juice: '🧃',
-  smoothie: '🥤',
-  coconut_milk: '🥛',
-  starfruit_juice: '🍹',
-  chocolate: '🍫',
-  banana_bread: '🍞',
-  vanilla_cake: '🍰',
-  bouquet: '💐',
-  spa_basket: '🎀',
-  grand_hamper: '🎁',
-  cloudclay: '🟫',
-  dewglass: '💧',
-  sunstone: '🔆',
-  stardust: '✨',
-  cloudBomb: '💣',
-  petTreat: '🍪',
-};
+export { ITEM_ICON } from './itemIcons';
+import { ITEM_ICON } from './itemIcons';
 
 /** @deprecated dùng ITEM_ICON */
 export const PLANT_ICON = ITEM_ICON;

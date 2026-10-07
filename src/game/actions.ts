@@ -5,6 +5,7 @@ import { PLANTS } from './config/plants';
 import { POT_BAG_MAX, SHOP_POTS } from './config/pots';
 import { commit, fail } from './commit';
 import { isBarnItemId, isInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { canCollect, collectInDraft } from './machines';
 import { canFulfill } from './orders';
 import { activePest, harvestQty, pestCatchGold, pestCatchXp, rollPestDrop, rollPlanting } from './pests';
 import { grantReward } from './rewards';
@@ -173,13 +174,17 @@ function harvestInDraft(s: GameState, floor: number, slot: number, now: number, 
 }
 
 /**
- * Làm mọi việc có thể ở một ô trong một lần chạm/kéo: bắt sâu, thu hoạch cây chín.
- * (Máy chế biến được thêm vào ở bước sau.)
+ * Làm mọi việc có thể ở một ô trong một lần chạm/kéo: bắt sâu, thu hoạch cây chín, lấy hàng ở máy.
  */
 export function sweep(state: GameState, floor: number, slot: number, now: number): ActionResult {
   const content = getSlot(state, floor, slot);
   if (content === undefined) return fail('INVALID');
-  if (content?.kind !== 'pot' || !content.plant) return fail('NOTHING_TO_DO');
+  if (content?.kind === 'machine') {
+    const can = canCollect(state, content, now);
+    if (can !== 'ok') return fail(can === 'STORAGE_FULL' ? 'STORAGE_FULL' : 'NOTHING_TO_DO');
+    return commit(state, now, (s, events) => collectInDraft(s, floor, slot, now, events));
+  }
+  if (!content?.plant) return fail('NOTHING_TO_DO');
   const crop = content.plant;
   const ready = isReady(crop, now);
   const pest = activePest(crop, now);

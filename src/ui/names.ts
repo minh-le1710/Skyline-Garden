@@ -2,6 +2,7 @@ import {
   POT_STATS,
   potStat,
   type ItemId,
+  type MachineId,
   type PlantId,
   type PotId,
   type PotInstance,
@@ -13,6 +14,7 @@ export const itemName = (id: ItemId): string => t(`item.${id}` as const);
 export const plantName = (id: PlantId): string => itemName(id);
 export const potName = (id: PotId): string => t(`pot.${id}` as const);
 export const rarityName = (r: Rarity): string => t(`rarity.${r}` as const);
+export const machineName = (id: MachineId): string => t(`machine.${id}` as const);
 
 /** Dòng chỉ số của một chậu, vd. "+10% XP · −8% thời gian". */
 export function potStatsText(pot: PotInstance): string {

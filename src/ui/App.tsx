@@ -2,6 +2,7 @@ import type { Game } from '../core/Game';
 import { BlockingNotice } from './BlockingNotice';
 import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
+import { MachinePanel } from './MachinePanel';
 import { OrdersPanel } from './OrdersPanel';
 import { FlyLayer, LevelUpModal, Toasts } from './Overlays';
 import { PotInfo } from './PotInfo';
@@ -22,6 +23,8 @@ function Panels() {
       return <OrdersPanel />;
     case 'unlock':
       return <UnlockDialog />;
+    case 'machine':
+      return <MachinePanel />;
     default:
       return null;
   }

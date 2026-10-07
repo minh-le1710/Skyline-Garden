@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { PLANT_IDS, type Command } from '../src/game';
+import { GOOD_IDS, MACHINE_IDS, PLANT_IDS, type Command } from '../src/game';
 
 // Bộ sinh lệnh ngẫu nhiên cho property test. Cố ý gồm cả chỉ số ngoài phạm vi để thử nhánh lỗi.
 const floor = fc.integer({ min: 0, max: 9 });
@@ -26,6 +26,38 @@ export const commandArb: fc.Arbitrary<Command> = fc.oneof(
   { weight: 1, arbitrary: fc.constant({ type: 'unlockFloor' as const }) },
   { weight: 2, arbitrary: fc.record({ type: fc.constant('deliverOrder' as const), index }) },
   { weight: 1, arbitrary: fc.record({ type: fc.constant('discardOrder' as const), index }) },
+  {
+    weight: 1,
+    arbitrary: fc.record({
+      type: fc.constant('buildMachine' as const),
+      machineId: fc.constantFrom(...MACHINE_IDS),
+      floor,
+      slot,
+    }),
+  },
+  {
+    weight: 2,
+    arbitrary: fc.record({
+      type: fc.constant('startJob' as const),
+      floor,
+      slot,
+      recipe: fc.constantFrom(...GOOD_IDS),
+    }),
+  },
+  { weight: 2, arbitrary: fc.record({ type: fc.constant('collectMachine' as const), floor, slot }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('speedUpMachine' as const), floor, slot }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('cancelJob' as const), floor, slot, index }) },
+  { weight: 1, arbitrary: fc.record({ type: fc.constant('upgradeMachine' as const), floor, slot }) },
+  {
+    weight: 1,
+    arbitrary: fc.record({
+      type: fc.constant('swapSlots' as const),
+      floor,
+      slot,
+      toFloor: floor,
+      toSlot: slot,
+    }),
+  },
 );
 
 /** Chuỗi (khoảng thời gian trôi qua, lệnh). Khoảng thời gian từ 0 tới 2 giờ để cây kịp chín. */

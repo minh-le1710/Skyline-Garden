@@ -29,15 +29,18 @@ describe('đơn hàng của Cú', () => {
     const a = ok(tick(newGame(), T0));
     const b = ok(tick(newGame(), T0));
     expect(a.orders).toEqual(b.orders);
-    const pool = unlockedPlants(6);
+    const pool = { crops: unlockedPlants(6), goods: ['rose_water', 'strawberry_jam'] as const };
+    let goods = 0;
     for (let i = 0; i < 200; i++) {
-      const order = generateOrder(new Rng(i), pool, i);
+      const order = generateOrder(new Rng(i), { crops: pool.crops, goods: [...pool.goods] }, i);
       const ids = order.items.map((it) => it.id);
       expect(new Set(ids).size).toBe(ids.length);
-      for (const id of ids) expect(pool).toContain(id);
+      for (const id of ids) expect([...pool.crops, ...pool.goods]).toContain(id);
+      goods += ids.filter((id) => ITEMS[id].kind === 'good').length;
       const value = order.items.reduce((sum, it) => sum + it.qty * ITEMS[it.id].sellPrice, 0);
       expect(order.gold).toBeGreaterThan(value);
     }
+    expect(goods).toBeGreaterThan(20);
   });
 
   it('giao đơn: trừ nông sản, cộng vàng + XP, chờ đơn mới', () => {

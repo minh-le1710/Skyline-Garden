@@ -2,6 +2,10 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   COMMAND_TYPES,
+  PLANT_IDS,
+  orderSlotsForLevel,
+  storageCapacityAfter,
+  xpForLevel,
   checkInvariants,
   createNewGame,
   deserialize,
@@ -15,9 +19,34 @@ import {
 import { NUM_RUNS, commandArb, scriptArb } from './arbitraries';
 import { T0 } from './helpers';
 
+/** Ván chơi "giàu": cấp cao, nhiều vàng và đồ, để kịch bản ngẫu nhiên chạm được máy, chậu, sâu… */
+function richGame(seed: number): GameState {
+  const s = createNewGame(T0, seed);
+  s.level = 26;
+  s.xp = xpForLevel(26);
+  s.gold = 1_000_000;
+  s.ruby = 500;
+  s.storageUpgrades = 20;
+  s.storageCapacity = storageCapacityAfter(20);
+  s.items = {
+    rose: 40,
+    sunflower: 40,
+    strawberry: 30,
+    tea: 20,
+    mint: 20,
+    cloudclay: 50,
+    dewglass: 30,
+    sunstone: 10,
+    stardust: 3,
+  };
+  for (const id of PLANT_IDS) s.seeds[id] = 5;
+  while (s.orders.length < orderSlotsForLevel(26)) s.orders.push({ order: null, readyAt: T0 });
+  return s;
+}
+
 /** Chạy một kịch bản lệnh, trả về state cuối và mọi state trung gian. */
-function play(seed: number, script: [number, Command][]): GameState[] {
-  let state = createNewGame(T0, seed);
+function play(seed: number, script: [number, Command][], rich = false): GameState[] {
+  let state = rich ? richGame(seed) : createNewGame(T0, seed);
   let now = T0;
   const states = [state];
   for (const [dt, cmd] of script) {
@@ -34,6 +63,15 @@ describe('bất biến của game', () => {
     fc.assert(
       fc.property(fc.nat(), scriptArb, (seed, script) => {
         for (const state of play(seed, script)) expect(checkInvariants(state)).toEqual([]);
+      }),
+      { numRuns: NUM_RUNS },
+    );
+  });
+
+  it('ván giàu: máy, chậu, sâu… vẫn giữ state hợp lệ', () => {
+    fc.assert(
+      fc.property(fc.nat(), scriptArb, (seed, script) => {
+        for (const state of play(seed, script, true)) expect(checkInvariants(state)).toEqual([]);
       }),
       { numRuns: NUM_RUNS },
     );

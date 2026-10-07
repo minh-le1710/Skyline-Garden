@@ -273,7 +273,14 @@ export type GameEvent =
   | { type: 'orderDelivered'; index: number; gold: number; xp: number }
   | { type: 'orderDiscarded'; index: number }
   | { type: 'ordersArrived'; count: number }
-  | { type: 'levelUp'; level: number; gold: number; ruby: number };
+  | { type: 'levelUp'; level: number; gold: number; ruby: number }
+  | { type: 'machineBuilt'; floor: number; slot: number; machineId: MachineId; gold: number }
+  | { type: 'machineUpgraded'; floor: number; slot: number; machineId: MachineId; level: number }
+  | { type: 'jobStarted'; floor: number; slot: number; recipe: RecipeId }
+  | { type: 'jobCanceled'; floor: number; slot: number; recipe: RecipeId }
+  | { type: 'goodsCollected'; floor: number; slot: number; items: Counts<GoodId>; xp: number }
+  | { type: 'machineSpeedUp'; floor: number; slot: number; ruby: number }
+  | { type: 'slotsSwapped'; from: { floor: number; slot: number }; to: { floor: number; slot: number } };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -298,6 +305,12 @@ export const ACTION_ERRORS = [
   'MAX_LEVEL',
   'NO_PEST',
   'NOTHING_TO_DO',
+  'NOT_A_MACHINE',
+  'MACHINE_OWNED',
+  'QUEUE_FULL',
+  'NOTHING_TO_COLLECT',
+  'NO_JOB',
+  'JOB_STARTED',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 
