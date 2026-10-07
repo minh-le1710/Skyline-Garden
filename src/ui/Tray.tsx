@@ -1,8 +1,8 @@
-import { POT_IDS, count, unlockedPlants } from '../game';
+import { count, potStacks, unlockedPlants } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
-import { PLANT_ICON, PotIcon } from './icons';
-import { plantName, potName } from './names';
+import { ITEM_ICON, PotIcon } from './icons';
+import { plantName, potName, potStatsText, rarityName } from './names';
 
 /** Khay chọn hạt giống / chậu, hiện phía trên thanh công cụ. */
 export function Tray() {
@@ -11,7 +11,7 @@ export function Tray() {
   if (!trayOpen.value) return null;
   const state = game.state.value;
   const plants = unlockedPlants(state.level);
-  const pots = POT_IDS.filter((id) => count(state.potStock, id) > 0);
+  const stacks = potStacks(state);
   const current = tool.value;
 
   const openShop = () => {
@@ -30,6 +30,7 @@ export function Tray() {
               key={id}
               class={`tray-item ${active ? 'active' : ''} ${n === 0 ? 'empty' : ''}`}
               title={plantName(id)}
+              aria-label={`${plantName(id)}: ${n}`}
               data-testid={`seed-${id}`}
               onClick={() => {
                 game.ui.selected.value = null;
@@ -37,24 +38,26 @@ export function Tray() {
                 else tool.value = active ? null : { kind: 'seed', plantId: id };
               }}
             >
-              <span class="tray-icon">{PLANT_ICON[id]}</span>
+              <span class="tray-icon">{ITEM_ICON[id]}</span>
               <span class="tray-count">{n}</span>
             </button>
           );
         })}
-        {pots.length > 0 && <span class="tray-divider" />}
-        {pots.map((id) => {
-          const active = current?.kind === 'pot' && current.potId === id;
+        {stacks.length > 0 && <span class="tray-divider" />}
+        {stacks.map((stack, i) => {
+          const active = current?.kind === 'pot' && current.stack === stack.key;
+          const label = `${potName(stack.sample.potId)} (${rarityName(stack.sample.rarity)}): ${potStatsText(stack.sample)}`;
           return (
             <button
-              key={id}
+              key={stack.key}
               class={`tray-item ${active ? 'active' : ''}`}
-              title={potName(id)}
-              data-testid={`pot-${id}`}
-              onClick={() => (tool.value = active ? null : { kind: 'pot', potId: id })}
+              title={label}
+              aria-label={label}
+              data-testid={`pot-stack-${i}`}
+              onClick={() => (tool.value = active ? null : { kind: 'pot', stack: stack.key })}
             >
-              <PotIcon potId={id} />
-              <span class="tray-count">{count(state.potStock, id)}</span>
+              <PotIcon potId={stack.sample.potId} rarity={stack.sample.rarity} />
+              <span class="tray-count">{stack.uids.length}</span>
             </button>
           );
         })}
@@ -77,7 +80,9 @@ export function ToolBanner() {
   if (tool.kind === 'seed') {
     text = t('tool.seed', { name: plantName(tool.plantId), n: count(state.seeds, tool.plantId) });
   } else if (tool.kind === 'pot') {
-    text = t('tool.pot', { name: potName(tool.potId), n: count(state.potStock, tool.potId) });
+    const stack = potStacks(state).find((s) => s.key === tool.stack);
+    const name = stack ? potName(stack.sample.potId) : '';
+    text = t('tool.pot', { name, n: stack?.uids.length ?? 0 });
   } else {
     text = t('tool.harvest');
   }

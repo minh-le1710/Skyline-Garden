@@ -1,9 +1,9 @@
-import { PLANT_LIST, POT_LIST, STORAGE_UPGRADE_STEP, count, storageUpgradeCost } from '../game';
+import { PLANT_LIST, SHOP_POT_LIST, count, hasItems, nextStorageUpgrade, type ItemId } from '../game';
 import { formatNumber, t } from '../i18n';
 import type { ShopTab } from '../core/Game';
 import { useGame } from './context';
-import { GOLD, PLANT_ICON, PotIcon } from './icons';
-import { humanDuration, plantName, potBonus, potName } from './names';
+import { GOLD, ITEM_ICON, PotIcon } from './icons';
+import { humanDuration, itemName, plantName, potName, potStatsText, rarityName } from './names';
 import { Sheet } from './Sheet';
 
 const TABS: ShopTab[] = ['seeds', 'pots', 'upgrades'];
@@ -13,6 +13,9 @@ export function ShopPanel() {
   const { panel, shopTab } = game.ui;
   const state = game.state.value;
   const close = () => (panel.value = null);
+  const upgrade = nextStorageUpgrade(state);
+  const potsOwned = (potId: string) =>
+    state.potBag.filter((p) => p.potId === potId && p.origin === 'shop').length;
 
   return (
     <Sheet title={t('shop.title')} onClose={close} testId="shop">
@@ -24,6 +27,7 @@ export function ShopPanel() {
             class={`tab ${shopTab.value === tab ? 'active' : ''}`}
             aria-selected={shopTab.value === tab}
             onClick={() => (shopTab.value = tab)}
+            data-testid={`shop-tab-${tab}`}
           >
             {t(`shop.tab.${tab}` as const)}
           </button>
@@ -36,7 +40,7 @@ export function ShopPanel() {
             const locked = state.level < p.unlockLevel;
             return (
               <li key={p.id} class={`card ${locked ? 'locked' : ''}`} data-testid={`shop-seed-${p.id}`}>
-                <span class="card-icon">{PLANT_ICON[p.id]}</span>
+                <span class="card-icon">{ITEM_ICON[p.id]}</span>
                 <div class="card-body">
                   <strong>{plantName(p.id)}</strong>
                   <small>{t('shop.growTime', { time: humanDuration(p.growSec) })}</small>
@@ -71,17 +75,20 @@ export function ShopPanel() {
 
       {shopTab.value === 'pots' && (
         <ul class="card-list">
-          {POT_LIST.map((p) => {
+          {SHOP_POT_LIST.map((p) => {
             const locked = state.level < p.unlockLevel;
+            const sample = { uid: 0, potId: p.id, rarity: p.rarity, stats: p.stats, origin: 'shop' as const };
             return (
               <li key={p.id} class={`card ${locked ? 'locked' : ''}`} data-testid={`shop-pot-${p.id}`}>
                 <span class="card-icon">
-                  <PotIcon potId={p.id} />
+                  <PotIcon potId={p.id} rarity={p.rarity} />
                 </span>
                 <div class="card-body">
                   <strong>{potName(p.id)}</strong>
-                  <small>{potBonus(p.id)}</small>
-                  {!locked && <small>{t('shop.owned', { n: count(state.potStock, p.id) })}</small>}
+                  <small>
+                    {rarityName(p.rarity)} · {potStatsText(sample)}
+                  </small>
+                  {!locked && <small>{t('shop.owned', { n: potsOwned(p.id) })}</small>}
                 </div>
                 {locked ? (
                   <span class="lock-note">{t('shop.unlockAt', { n: p.unlockLevel })}</span>
@@ -110,23 +117,42 @@ export function ShopPanel() {
             <span class="card-icon">📦</span>
             <div class="card-body">
               <strong>{t('shop.storage')}</strong>
-              <small>
-                {t('shop.storageDesc', {
-                  from: state.storageCapacity,
-                  to: state.storageCapacity + STORAGE_UPGRADE_STEP,
-                })}
-              </small>
+              {upgrade ? (
+                <>
+                  <small>
+                    {t('shop.storageDesc', {
+                      from: state.storageCapacity,
+                      to: state.storageCapacity + upgrade.capacity,
+                    })}
+                  </small>
+                  {Object.keys(upgrade.materials).length > 0 && (
+                    <small>
+                      {Object.entries(upgrade.materials)
+                        .map(
+                          ([id, n]) =>
+                            `${ITEM_ICON[id as ItemId]} ${itemName(id as ItemId)} ${count(state.items, id as ItemId)}/${n}`,
+                        )
+                        .join(' · ')}
+                    </small>
+                  )}
+                </>
+              ) : (
+                <small>{t('shop.storageMax')}</small>
+              )}
             </div>
-            <button
-              class="btn gold"
-              disabled={state.gold < storageUpgradeCost(state.storageUpgrades)}
-              onClick={() => game.exec({ type: 'upgradeStorage' })}
-            >
-              {t('shop.buy')}
-              <small>
-                {GOLD} {formatNumber(storageUpgradeCost(state.storageUpgrades))}
-              </small>
-            </button>
+            {upgrade && (
+              <button
+                class="btn gold"
+                disabled={state.gold < upgrade.gold || !hasItems(state, upgrade.materials)}
+                onClick={() => game.exec({ type: 'upgradeStorage' })}
+                data-testid="upgrade-storage"
+              >
+                {t('shop.buy')}
+                <small>
+                  {GOLD} {formatNumber(upgrade.gold)}
+                </small>
+              </button>
+            )}
           </li>
         </ul>
       )}

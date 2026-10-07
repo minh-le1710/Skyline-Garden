@@ -1,8 +1,7 @@
 import { signal } from '@preact/signals';
 import type { Game } from '../core/Game';
-import type { PlantId, PotId } from '../game';
 import { t } from '../i18n';
-import { GOLD, PLANT_ICON, XP } from './icons';
+import { GOLD, ITEM_ICON, XP } from './icons';
 import { plantName, potName } from './names';
 
 // Phản hồi cho người chơi: thông báo ngắn (toast), biểu tượng bay về HUD, hộp thoại lên cấp.
@@ -77,7 +76,7 @@ export function connectFeedback(
         break;
       case 'harvested': {
         const from = slotScreenPosition(event.floor, event.slot);
-        fly(PLANT_ICON[event.plantId], `+${event.qty}`, from, 'storage');
+        fly(ITEM_ICON[event.plantId], `+${event.qty}`, from, 'storage');
         fly(XP, `+${event.xp}`, { x: from.x, y: from.y - 24 }, 'xp');
         break;
       }
@@ -90,7 +89,7 @@ export function connectFeedback(
         showToast(t('toast.delivered', { gold: event.gold, xp: event.xp }), 'success');
         break;
       case 'bought': {
-        const name = event.item === 'seed' ? plantName(event.id as PlantId) : potName(event.id as PotId);
+        const name = event.item === 'seed' ? plantName(event.id) : potName(event.id);
         showToast(t('toast.bought', { qty: event.qty, name }), 'success');
         break;
       }

@@ -47,6 +47,47 @@ describe('hash', () => {
   });
 
   it('RULES_HASH đổi thì phải xác nhận (cập nhật snapshot) vì server sẽ từ chối client khác luật', () => {
-    expect(RULES_HASH).toMatchInlineSnapshot(`"z3lksjfs4d"`);
+    expect(RULES_HASH).toMatchInlineSnapshot(`"oyqaosuqjb"`);
+  });
+});
+
+describe('v1 → v2', () => {
+  const v1 = JSON.parse(readFileSync(`${DIR}/v1-midgame.json`, 'utf8'));
+
+  it('chậu thành từng chiếc có uid, giữ chỉ số cũ; nông sản vào kho chung; đơn hàng dùng id', () => {
+    const raw = structuredClone(v1);
+    raw.potStock = { ceramic: 2, porcelain: 1 };
+    raw.floors[1].slots[5] = { potId: 'porcelain', plant: null };
+    const result = readSave(JSON.stringify(raw));
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') return;
+    const s = result.state;
+    const uids = [...s.potBag, ...s.floors.flatMap((f) => f.slots)].flatMap((p) =>
+      p && 'uid' in p ? [p.uid] : [],
+    );
+    expect(new Set(uids).size).toBe(uids.length);
+    expect(s.nextUid).toBe(Math.max(...uids) + 1);
+    expect(s.potBag.map((p) => [p.potId, p.stats])).toEqual([
+      ['ceramic', { xpPct: 20 }],
+      ['ceramic', { xpPct: 20 }],
+      ['porcelain', { timePct: 15 }],
+    ]);
+    expect(s.floors[1]!.slots[5]).toMatchObject({ kind: 'pot', potId: 'porcelain', origin: 'legacy' });
+    expect(s.items).toEqual(raw.crops);
+    const growing = s.floors.flatMap((f) => f.slots).find((p) => p?.kind === 'pot' && p.plant);
+    expect(growing?.kind === 'pot' && growing.plant).toMatchObject({ yield: 2, pest: null });
+    for (const slot of s.orders)
+      for (const item of slot.order?.items ?? []) expect(item).toHaveProperty('id');
+    expect(s.rng.orders).toBe(raw.rngSeed >>> 0);
+    expect(new Set(Object.values(s.rng)).size).toBe(Object.keys(s.rng).length);
+  });
+
+  it('đổi bảng XP nhưng giữ cấp và tỉ lệ tiến độ trong cấp', () => {
+    const raw = structuredClone(v1);
+    raw.level = 4;
+    raw.xp = 80; // v1: cấp 4 từ 60 tới 100 → đi được một nửa
+    while (raw.orders.length < 4) raw.orders.push({ order: null, readyAt: 0 });
+    const result = readSave(JSON.stringify(raw));
+    expect(result.status === 'ok' && [result.state.level, result.state.xp]).toEqual([4, 150 + 80]);
   });
 });

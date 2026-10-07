@@ -410,3 +410,20 @@ At each checkpoint: full Playwright run on both projects, `renderInfo` budget, s
 - /home/user/Skyline-Garden/src/game/save.ts (`readSave`, `KeyValueStore`, new `migrations.ts`, `looksValid`)
 - /home/user/Skyline-Garden/src/core/Game.ts (`exec`, `replaceState`, `blocked`, options constructor, settings)
 - /home/user/Skyline-Garden/src/render/GardenView.ts and /home/user/Skyline-Garden/src/input/InputController.ts (slot union, GardenSource, ScreenHost split)
+
+---
+
+## Ghi chú khi thực hiện: đánh số lại save version
+
+Bảng §4.3 dự tính v2 (RNG) và v3 (kho đồ) và v4 (bảng XP) là ba lần nâng riêng. Khi làm, ba thay đổi này được gộp thành **một lần nâng v1 → v2** vì chưa có save v2/v3 nào được phát hành. Các version sau lùi lại tương ứng:
+
+| Version | Nội dung                                                                                                                                                                                |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v2      | Luồng RNG, thống kê, kho đồ hợp nhất `items`, chậu thành từng chiếc `potBag`, ô `kind` pot/machine, đơn hàng `{id, qty}`, bảng XP mới (giữ cấp và tỉ lệ tiến độ), 16 cây, bảng nâng kho |
+| v3      | Quà đăng nhập + nhiệm vụ ngày                                                                                                                                                           |
+| v4      | Khinh khí cầu                                                                                                                                                                           |
+| v5      | Thành tựu                                                                                                                                                                               |
+| v6      | Hướng dẫn                                                                                                                                                                               |
+| v7      | Mỏ                                                                                                                                                                                      |
+| v8      | Thú cưng                                                                                                                                                                                |
+| v9      | Sạp hàng + hàng xóm                                                                                                                                                                     |

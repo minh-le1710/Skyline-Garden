@@ -70,12 +70,18 @@ export function saveGame(storage: KeyValueStore, state: GameState): void {
 
 /** Kiểm tra cấu trúc và bất biến, để save hỏng hoặc bị sửa tay không làm sập game. */
 function shapeProblems(d: Record<string, unknown>): string | null {
-  const required = ['floors', 'orders', 'seeds', 'crops', 'potStock'];
+  const required = ['floors', 'orders', 'seeds', 'items', 'potBag', 'rng', 'stats'];
   for (const key of required) if (!(key in d)) return `thiếu trường ${key}`;
   if (!Array.isArray(d.floors) || !d.floors.every((f) => isRecord(f) && Array.isArray(f.slots))) {
     return 'floors không hợp lệ';
   }
-  if (!Array.isArray(d.orders) || ![d.seeds, d.crops, d.potStock].every(isRecord)) return 'kho không hợp lệ';
+  if (
+    !Array.isArray(d.orders) ||
+    !Array.isArray(d.potBag) ||
+    ![d.seeds, d.items, d.rng, d.stats].every(isRecord)
+  ) {
+    return 'kho không hợp lệ';
+  }
   try {
     const broken = checkInvariants(d as unknown as GameState);
     return broken.length ? broken.slice(0, 3).join('; ') : null;

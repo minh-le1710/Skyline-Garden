@@ -6,14 +6,14 @@ import {
   harvest,
   placePot,
   plant,
-  sellCrop,
+  sellItem,
   speedUp,
-  tick,
   unlockFloor,
   upgradeStorage,
 } from './actions';
-import { isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
-import type { ActionResult, GameState, PlantId, PotId } from './types';
+import { isBarnItemId, isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { tick } from './tick';
+import type { ActionResult, BarnItemId, GameState, PlantId, PotId } from './types';
 
 /**
  * Mọi thay đổi GameState đều là một lệnh. Lệnh là JSON thuần nên ghi log, gửi lên server
@@ -23,11 +23,11 @@ export type Command =
   | { type: 'tick' }
   | { type: 'buySeed'; plantId: PlantId; qty: number }
   | { type: 'buyPot'; potId: PotId; qty: number }
-  | { type: 'placePot'; floor: number; slot: number; potId: PotId }
+  | { type: 'placePot'; floor: number; slot: number; uid: number }
   | { type: 'plant'; floor: number; slot: number; plantId: PlantId }
   | { type: 'harvest'; floor: number; slot: number }
   | { type: 'speedUp'; floor: number; slot: number }
-  | { type: 'sellCrop'; plantId: PlantId; qty: number }
+  | { type: 'sellItem'; id: BarnItemId; qty: number }
   | { type: 'upgradeStorage' }
   | { type: 'unlockFloor' }
   | { type: 'deliverOrder'; index: number }
@@ -48,23 +48,23 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
     case 'tick':
       return tick(s, now);
     case 'buySeed':
-      return buySeed(s, c.plantId, c.qty);
+      return buySeed(s, c.plantId, c.qty, now);
     case 'buyPot':
-      return buyPot(s, c.potId, c.qty);
+      return buyPot(s, c.potId, c.qty, now);
     case 'placePot':
-      return placePot(s, c.floor, c.slot, c.potId);
+      return placePot(s, c.floor, c.slot, c.uid, now);
     case 'plant':
       return plant(s, c.floor, c.slot, c.plantId, now);
     case 'harvest':
       return harvest(s, c.floor, c.slot, now);
     case 'speedUp':
       return speedUp(s, c.floor, c.slot, now);
-    case 'sellCrop':
-      return sellCrop(s, c.plantId, c.qty);
+    case 'sellItem':
+      return sellItem(s, c.id, c.qty, now);
     case 'upgradeStorage':
-      return upgradeStorage(s);
+      return upgradeStorage(s, now);
     case 'unlockFloor':
-      return unlockFloor(s);
+      return unlockFloor(s, now);
     case 'deliverOrder':
       return deliverOrder(s, c.index, now);
     case 'discardOrder':
@@ -90,7 +90,9 @@ type FieldCheck = (value: unknown) => boolean;
 const FIELD = {
   plantId: isPlantId,
   potId: isPotId,
+  barnItem: isBarnItemId,
   index: isNonNegInt,
+  uid: isPositiveInt,
   qty: isPositiveInt,
 } satisfies Record<string, FieldCheck>;
 
@@ -98,11 +100,11 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   tick: {},
   buySeed: { plantId: FIELD.plantId, qty: FIELD.qty },
   buyPot: { potId: FIELD.potId, qty: FIELD.qty },
-  placePot: { floor: FIELD.index, slot: FIELD.index, potId: FIELD.potId },
+  placePot: { floor: FIELD.index, slot: FIELD.index, uid: FIELD.uid },
   plant: { floor: FIELD.index, slot: FIELD.index, plantId: FIELD.plantId },
   harvest: { floor: FIELD.index, slot: FIELD.index },
   speedUp: { floor: FIELD.index, slot: FIELD.index },
-  sellCrop: { plantId: FIELD.plantId, qty: FIELD.qty },
+  sellItem: { id: FIELD.barnItem, qty: FIELD.qty },
   upgradeStorage: {},
   unlockFloor: {},
   deliverOrder: { index: FIELD.index },

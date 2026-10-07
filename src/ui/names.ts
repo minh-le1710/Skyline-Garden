@@ -1,14 +1,25 @@
-import { POTS, type PlantId, type PotId } from '../game';
+import {
+  POT_STATS,
+  potStat,
+  type ItemId,
+  type PlantId,
+  type PotId,
+  type PotInstance,
+  type Rarity,
+} from '../game';
 import { t } from '../i18n';
 
-export const plantName = (id: PlantId): string => t(`plant.${id}` as const);
+export const itemName = (id: ItemId): string => t(`item.${id}` as const);
+export const plantName = (id: PlantId): string => itemName(id);
 export const potName = (id: PotId): string => t(`pot.${id}` as const);
+export const rarityName = (r: Rarity): string => t(`rarity.${r}` as const);
 
-export function potBonus(id: PotId): string {
-  const def = POTS[id];
-  if (def.xpBonusPct) return t('pot.bonus.xp', { n: def.xpBonusPct });
-  if (def.timeReducePct) return t('pot.bonus.time', { n: def.timeReducePct });
-  return t('pot.bonus.none');
+/** Dòng chỉ số của một chậu, vd. "+10% XP · −8% thời gian". */
+export function potStatsText(pot: PotInstance): string {
+  const parts = POT_STATS.filter((k) => potStat(pot, k) > 0).map((k) =>
+    t(`stat.${k}` as const, { n: potStat(pot, k) }),
+  );
+  return parts.length ? parts.join(' · ') : t('pot.bonus.none');
 }
 
 /** Thời lượng dễ đọc cho người chơi, vd. "30 giây", "2 phút", "1 giờ 30 phút". */

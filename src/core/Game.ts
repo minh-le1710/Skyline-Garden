@@ -15,17 +15,21 @@ import {
   type GameEvent,
   type GameState,
   type PlantId,
-  type PotId,
 } from '../game';
 import { Clock } from './Clock';
 import { EventBus } from './EventBus';
 
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 32);
 
-export type Tool = { kind: 'seed'; plantId: PlantId } | { kind: 'pot'; potId: PotId } | { kind: 'harvest' };
+export type Tool =
+  | { kind: 'seed'; plantId: PlantId }
+  /** Đặt chậu từ một chồng trong khay (các chậu giống hệt nhau). */
+  | { kind: 'pot'; stack: string }
+  | { kind: 'harvest' };
 
 export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock';
 export type ShopTab = 'seeds' | 'pots' | 'upgrades';
+export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';
 
 export interface SlotRef {
   floor: number;
@@ -70,6 +74,7 @@ export class Game {
     trayOpen: signal(false),
     panel: signal<PanelId | null>(null),
     shopTab: signal<ShopTab>('seeds'),
+    storageTab: signal<StorageTab>('crops'),
     selected: signal<SlotRef | null>(null),
   };
 

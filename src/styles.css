@@ -896,3 +896,61 @@ h3 {
   background: rgba(30, 50, 90, 0.55);
   backdrop-filter: blur(3px);
 }
+
+.pot-stoneware {
+  background: linear-gradient(#a7a29b 0 40%, #c9c2b8 40% 52%, #8f8a83 52%);
+}
+
+.pot-jade {
+  background: linear-gradient(#d8f5e4 0 14%, #47b07a 14%);
+}
+
+.pot-crystal {
+  background: linear-gradient(135deg, #e6f7ff, #9fd8f5 50%, #e6f7ff);
+}
+
+.pot-celestial {
+  background: linear-gradient(#3c4fb8 0 14%, #f3c547 14% 40%, #3c4fb8 40% 52%, #f3c547 52%);
+}
+
+/* Độ hiếm: viền màu + chữ, không chỉ dựa vào màu. */
+.pot-icon.rarity-uncommon,
+.pot-icon.rarity-rare,
+.pot-icon.rarity-epic,
+.pot-icon.rarity-legendary {
+  box-shadow: 0 -3px 0 var(--rarity) inset;
+}
+
+.rarity-common {
+  --rarity: #9aa5b1;
+}
+.rarity-uncommon {
+  --rarity: #4caf50;
+}
+.rarity-rare {
+  --rarity: #3d8bfd;
+}
+.rarity-epic {
+  --rarity: #a259ff;
+}
+.rarity-legendary {
+  --rarity: #ffb300;
+}
+
+.card[class*='rarity-border-'] {
+  border-left-width: 6px;
+}
+.rarity-border-uncommon {
+  border-left-color: #4caf50;
+}
+.rarity-border-rare {
+  border-left-color: #3d8bfd;
+}
+.rarity-border-epic {
+  border-left-color: #a259ff;
+  border-left-style: double;
+}
+.rarity-border-legendary {
+  border-left-color: #ffb300;
+  border-left-style: double;
+}

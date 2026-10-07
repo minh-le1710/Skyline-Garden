@@ -40,6 +40,7 @@ describe('lưu game', () => {
     expect(deserialize(JSON.stringify({ ...newGame(), version: 0 }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...newGame(), floors: [] }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...newGame(), gold: 'nhiều' }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...newGame(), items: { rose: -1 } }))).toBeNull();
   });
 
   it('tính tiến độ khi đi vắng', () => {

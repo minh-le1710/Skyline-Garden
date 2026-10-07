@@ -1,31 +1,40 @@
-import { PLANTS } from './config/plants';
+import { ITEMS } from './config/items';
 import {
   MAX_ITEMS_PER_ORDER,
   ORDER_GOLD_MULTIPLIER,
   ORDER_XP_MULTIPLIER,
   orderQtyRange,
 } from './config/orders';
+import { PLANTS } from './config/plants';
 import { unlockedPlants } from './progression';
-import { Rng } from './rng';
-import type { GameEvent, GameState, Order, OrderItem } from './types';
+import { withRng, type Rng } from './rng';
+import { count } from './state';
+import type { BarnItemId, GameEvent, GameState, Order, OrderItem } from './types';
 
-export function generateOrder(rng: Rng, level: number, id: number): Order {
-  const pool = unlockedPlants(level);
+/** Những món có thể xuất hiện trong đơn hàng ở trạng thái hiện tại. */
+export function orderPool(state: GameState): BarnItemId[] {
+  return unlockedPlants(state.level);
+}
+
+function qtyRange(id: BarnItemId): [number, number] {
+  return ITEMS[id].kind === 'crop' ? orderQtyRange(PLANTS[id as keyof typeof PLANTS].growSec) : [1, 2];
+}
+
+export function generateOrder(rng: Rng, pool: readonly BarnItemId[], id: number): Order {
   const itemCount = rng.int(1, Math.min(MAX_ITEMS_PER_ORDER, pool.length));
   const items: OrderItem[] = [];
   const remaining = [...pool];
   for (let i = 0; i < itemCount; i++) {
-    const plantId = rng.pick(remaining);
-    remaining.splice(remaining.indexOf(plantId), 1);
-    const [min, max] = orderQtyRange(PLANTS[plantId].growSec);
-    items.push({ plantId, qty: rng.int(min, max) });
+    const itemId = rng.pick(remaining);
+    remaining.splice(remaining.indexOf(itemId), 1);
+    const [min, max] = qtyRange(itemId);
+    items.push({ id: itemId, qty: rng.int(min, max) });
   }
   let value = 0;
   let xp = 0;
-  for (const { plantId, qty } of items) {
-    const def = PLANTS[plantId];
-    value += qty * def.sellPrice;
-    xp += (qty * def.xp) / def.yield;
+  for (const { id: itemId, qty } of items) {
+    value += qty * ITEMS[itemId].sellPrice;
+    xp += qty * ITEMS[itemId].xpValue;
   }
   return {
     id,
@@ -35,22 +44,27 @@ export function generateOrder(rng: Rng, level: number, id: number): Order {
   };
 }
 
+/** Các chỗ trống trên bảng đơn đã tới giờ có đơn mới, theo thứ tự thời gian rồi chỉ số. */
+export const dueOrderSlots = (state: GameState, now: number): number[] =>
+  state.orders
+    .map((slot, index) => ({ slot, index }))
+    .filter(({ slot }) => slot.order === null && slot.readyAt <= now)
+    .sort((a, b) => a.slot.readyAt - b.slot.readyAt || a.index - b.index)
+    .map(({ index }) => index);
+
 /**
  * Điền đơn mới vào các chỗ trống đã tới giờ. Sửa trực tiếp `state`.
  * Gọi khi load game và định kỳ, nên đơn vẫn tới dù người chơi tắt game.
  */
 export function fillOrders(state: GameState, now: number, events: GameEvent[]): void {
-  const rng = new Rng(state.rngSeed);
-  let arrived = 0;
-  for (const slot of state.orders) {
-    if (slot.order === null && slot.readyAt <= now) {
-      slot.order = generateOrder(rng, state.level, state.nextOrderId++);
-      arrived++;
-    }
-  }
-  state.rngSeed = rng.seed;
-  if (arrived > 0) events.push({ type: 'ordersArrived', count: arrived });
+  const due = dueOrderSlots(state, now);
+  if (due.length === 0) return;
+  const pool = orderPool(state);
+  withRng(state, 'orders', (rng) => {
+    for (const index of due) state.orders[index]!.order = generateOrder(rng, pool, state.nextOrderId++);
+  });
+  events.push({ type: 'ordersArrived', count: due.length });
 }
 
 export const canFulfill = (state: GameState, order: Order): boolean =>
-  order.items.every(({ plantId, qty }) => (state.crops[plantId] ?? 0) >= qty);
+  order.items.every(({ id, qty }) => count(state.items, id) >= qty);

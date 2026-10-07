@@ -1,8 +1,8 @@
 import { canFulfill, count, formatDuration } from '../game';
 import { formatNumber, t } from '../i18n';
 import { useGame } from './context';
-import { GOLD, PLANT_ICON, XP } from './icons';
-import { plantName } from './names';
+import { GOLD, ITEM_ICON, XP } from './icons';
+import { itemName } from './names';
 import { Sheet } from './Sheet';
 
 export function OrdersPanel() {
@@ -28,11 +28,11 @@ export function OrdersPanel() {
           return (
             <div key={order.id} class={`order-card ${ready ? 'ready' : ''}`} data-testid={`order-${index}`}>
               <ul class="order-items">
-                {order.items.map(({ plantId, qty }) => {
-                  const have = count(state.crops, plantId);
+                {order.items.map(({ id, qty }) => {
+                  const have = count(state.items, id);
                   return (
-                    <li key={plantId} class={have >= qty ? 'ok' : ''} title={plantName(plantId)}>
-                      <span class="order-icon">{PLANT_ICON[plantId]}</span>
+                    <li key={id} class={have >= qty ? 'ok' : ''} title={itemName(id)}>
+                      <span class="order-icon">{ITEM_ICON[id]}</span>
                       <span>
                         {Math.min(have, qty)}/{qty}
                       </span>

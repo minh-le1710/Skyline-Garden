@@ -1,10 +1,28 @@
-import { MAX_FLOORS, SLOTS_PER_FLOOR, START_STORAGE, STORAGE_UPGRADE_STEP } from './config/garden';
+import { MAX_FLOORS, SLOTS_PER_FLOOR, STORAGE_UPGRADES, storageCapacityAfter } from './config/garden';
 import { MAX_LEVEL } from './config/levels';
 import { orderSlotsForLevel } from './config/orders';
-import { isNonNegInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import { POT_BAG_MAX } from './config/pots';
+import {
+  isBarnItemId,
+  isItemId,
+  isMachineId,
+  isNonNegInt,
+  isPlantId,
+  isPositiveInt,
+  isPotId,
+  isRarity,
+} from './ids';
 import { levelForXp } from './progression';
 import { storageUsed } from './state';
-import type { Counts, GameState } from './types';
+import {
+  PEST_IDS,
+  POT_STATS,
+  RNG_STREAMS,
+  STAT_KEYS,
+  type Counts,
+  type GameState,
+  type PotInstance,
+} from './types';
 
 /**
  * Các điều kiện luôn phải đúng với mọi state hợp lệ. Trả về danh sách vi phạm (rỗng là ổn).
@@ -16,13 +34,14 @@ export function checkInvariants(s: GameState): string[] {
     if (!ok) errors.push(message);
   };
 
-  for (const key of ['gold', 'ruby', 'xp', 'nextOrderId', 'storageUpgrades'] as const) {
+  for (const key of ['gold', 'ruby', 'xp', 'nextOrderId', 'storageUpgrades', 'nextUid'] as const) {
     expect(isNonNegInt(s[key]), `${key} phải là số nguyên không âm (đang là ${s[key]})`);
   }
   expect(isPositiveInt(s.level) && s.level <= MAX_LEVEL, `level không hợp lệ: ${s.level}`);
   expect(s.level === levelForXp(s.xp), `level ${s.level} không khớp XP ${s.xp}`);
+  expect(s.storageUpgrades <= STORAGE_UPGRADES.length, `nâng kho quá số mức: ${s.storageUpgrades}`);
   expect(
-    s.storageCapacity === START_STORAGE + s.storageUpgrades * STORAGE_UPGRADE_STEP,
+    s.storageCapacity === storageCapacityAfter(s.storageUpgrades),
     `sức chứa kho ${s.storageCapacity} không khớp số lần nâng cấp`,
   );
   expect(storageUsed(s) <= s.storageCapacity, `kho vượt sức chứa: ${storageUsed(s)}/${s.storageCapacity}`);
@@ -34,19 +53,55 @@ export function checkInvariants(s: GameState): string[] {
     }
   };
   checkCounts('seeds', s.seeds, isPlantId);
-  checkCounts('crops', s.crops, isPlantId);
-  checkCounts('potStock', s.potStock, isPotId);
+  checkCounts('items', s.items, isItemId);
+  checkCounts('stats', s.stats, (k) => STAT_KEYS.includes(k as never));
+  for (const stream of RNG_STREAMS) {
+    const v = s.rng?.[stream];
+    expect(isNonNegInt(v) && v <= 0xffffffff, `rng.${stream} không hợp lệ`);
+  }
+
+  const uids = new Set<number>();
+  const checkPot = (p: PotInstance, where: string) => {
+    expect(isPositiveInt(p.uid) && p.uid < s.nextUid, `${where}: uid ${p.uid} không hợp lệ`);
+    expect(!uids.has(p.uid), `${where}: uid ${p.uid} bị trùng`);
+    uids.add(p.uid);
+    expect(isPotId(p.potId) && isRarity(p.rarity), `${where}: loại chậu không hợp lệ`);
+    expect(['shop', 'forge', 'reward', 'legacy'].includes(p.origin), `${where}: nguồn chậu lạ`);
+    for (const [stat, v] of Object.entries(p.stats ?? {})) {
+      expect(POT_STATS.includes(stat as never) && isPositiveInt(v), `${where}: chỉ số ${stat} không hợp lệ`);
+    }
+  };
+  expect(s.potBag.length <= POT_BAG_MAX, `kho chậu vượt ${POT_BAG_MAX}`);
+  s.potBag.forEach((p, i) => checkPot(p, `potBag[${i}]`));
 
   expect(s.floors.length >= 1 && s.floors.length <= MAX_FLOORS, `số tầng không hợp lệ: ${s.floors.length}`);
   s.floors.forEach((floor, f) => {
     expect(floor.slots.length === SLOTS_PER_FLOOR, `tầng ${f} có ${floor.slots.length} ô`);
-    floor.slots.forEach((pot, i) => {
-      if (pot === null) return;
-      expect(isPotId(pot.potId), `chậu lạ ở ${f}:${i}`);
-      const p = pot.plant;
-      if (p) {
-        expect(isPlantId(p.plantId), `cây lạ ở ${f}:${i}`);
-        expect(isNonNegInt(p.plantedAt) && isNonNegInt(p.growMs), `thời gian cây không hợp lệ ở ${f}:${i}`);
+    floor.slots.forEach((content, i) => {
+      const where = `ô ${f}:${i}`;
+      if (content === null) return;
+      if (content.kind === 'pot') {
+        checkPot(content, where);
+        const p = content.plant;
+        if (p) {
+          expect(isPlantId(p.plantId), `${where}: cây lạ`);
+          expect(isNonNegInt(p.plantedAt) && isNonNegInt(p.growMs), `${where}: thời gian cây không hợp lệ`);
+          expect(isPositiveInt(p.yield), `${where}: sản lượng không hợp lệ`);
+          if (p.pest !== null) {
+            expect(PEST_IDS.includes(p.pest.id), `${where}: sâu lạ`);
+            expect(p.pest.at <= p.pest.leaveAt, `${where}: thời gian sâu không hợp lệ`);
+          }
+        }
+      } else if (content.kind === 'machine') {
+        expect(isMachineId(content.machineId), `${where}: máy lạ`);
+        expect(isPositiveInt(content.level), `${where}: cấp máy không hợp lệ`);
+        let prevDone = 0;
+        for (const job of content.queue) {
+          expect(job.startAt <= job.doneAt && job.startAt >= prevDone, `${where}: hàng đợi máy sai thứ tự`);
+          prevDone = job.doneAt;
+        }
+      } else {
+        errors.push(`${where}: loại ô lạ`);
       }
     });
   });
@@ -58,7 +113,7 @@ export function checkInvariants(s: GameState): string[] {
     expect(order.id < s.nextOrderId, `đơn ${order.id} có id không nhỏ hơn nextOrderId`);
     expect(order.items.length > 0, `đơn ${order.id} rỗng`);
     for (const item of order.items) {
-      expect(isPlantId(item.plantId) && isPositiveInt(item.qty), `món lạ trong đơn ${order.id}`);
+      expect(isBarnItemId(item.id) && isPositiveInt(item.qty), `món lạ trong đơn ${order.id}`);
     }
     expect(isPositiveInt(order.gold) && isPositiveInt(order.xp), `thưởng đơn ${order.id} không hợp lệ`);
   }

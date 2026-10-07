@@ -12,7 +12,7 @@ import {
   type BufferGeometry,
   type Scene,
 } from 'three';
-import { MAX_FLOORS, growthProgress, type GameState, type PlantId, type Pot } from '../game';
+import { MAX_FLOORS, asPot, growthProgress, type GameState, type PlantId, type SlotContent } from '../game';
 import type { AppEvent, Game } from '../core/Game';
 import { t } from '../i18n';
 import { cloudGeometry, seeded, type Puff } from './clouds';
@@ -27,6 +27,7 @@ import {
   readySparkle,
   selectionRing,
   type PlantModel,
+  buildMachine,
 } from './models';
 import { easeOutBack, type Tweens } from './tween';
 
@@ -54,21 +55,30 @@ class SlotView {
     this.group.add(this.content);
   }
 
-  sync(pot: Pot | null, animate: boolean): void {
-    const key = pot ? `${pot.potId}|${pot.plant?.plantId ?? ''}|${pot.plant?.plantedAt ?? ''}` : 'empty';
+  sync(content: SlotContent | null, animate: boolean): void {
+    const pot = asPot(content);
+    const base = !content
+      ? 'empty'
+      : content.kind === 'pot'
+        ? `pot:${content.uid}:${content.potId}:${content.rarity}`
+        : `machine:${content.machineId}:${content.level}`;
+    const key = `${base}|${pot?.plant?.plantId ?? ''}|${pot?.plant?.plantedAt ?? ''}`;
     if (key === this.key) return;
-    const potChanged = this.key.split('|')[0] !== key.split('|')[0];
+    const baseChanged = this.key.split('|')[0] !== base;
     this.key = key;
 
-    if (potChanged) {
+    if (baseChanged) {
       this.group.remove(this.content);
       this.content = new Group();
       this.group.add(this.content);
       this.plantRoot = null;
-      if (!pot) {
+      if (!content) {
         this.content.add(emptySlotMarker());
+      } else if (content.kind === 'pot') {
+        this.content.add(blobShadow(), buildPot(content.potId, content.rarity));
+        if (animate) this.pop(this.content, 0.4);
       } else {
-        this.content.add(blobShadow(), buildPot(pot.potId));
+        this.content.add(blobShadow(0.7), buildMachine(content.machineId));
         if (animate) this.pop(this.content, 0.4);
       }
     }
@@ -91,8 +101,8 @@ class SlotView {
     }
   }
 
-  update(pot: Pot | null, now: number, time: number): void {
-    const plant = pot?.plant;
+  update(content: SlotContent | null, now: number, time: number): void {
+    const plant = asPot(content)?.plant;
     if (!plant || !this.model || !this.plantRoot) return;
     const p = growthProgress(plant, now);
     const stage = p < SPROUT_END ? 0 : p < 1 ? 1 : 2;
@@ -240,11 +250,19 @@ const PARTICLE_COLORS: Record<PlantId, number> = {
   rose: 0xe9506a,
   sunflower: 0xffc93c,
   strawberry: 0xe53945,
+  mint: 0x5fd38a,
   lavender: 0xb48ae8,
+  tea: 0x9be36f,
   lily: 0xffc2da,
   apple: 0xe63b3b,
+  cotton: 0xffffff,
   banana: 0xf5d33c,
+  lotus: 0xff8fbf,
   coconut: 0x8b5a33,
+  cocoa: 0xc4561e,
+  dragonfruit: 0xe0307b,
+  vanilla: 0xfff2a8,
+  starfruit: 0xf6d743,
 };
 
 /** Toàn bộ khu vườn: đồng bộ cảnh 3D theo GameState mỗi khung hình. */

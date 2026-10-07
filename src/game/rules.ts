@@ -4,9 +4,10 @@ import {
   SLOTS_PER_FLOOR,
   START,
   START_STORAGE,
-  STORAGE_UPGRADE_STEP,
+  STORAGE_UPGRADES,
 } from './config/garden';
-import { MAX_LEVEL } from './config/levels';
+import { GOODS } from './config/goods';
+import { MAX_LEVEL, XP_TABLE } from './config/levels';
 import {
   MAX_ITEMS_PER_ORDER,
   ORDER_DELIVER_COOLDOWN_MS,
@@ -15,7 +16,7 @@ import {
   ORDER_XP_MULTIPLIER,
 } from './config/orders';
 import { PLANTS } from './config/plants';
-import { POTS } from './config/pots';
+import { POT_BAG_MAX, POT_RESALE_PCT, POT_STAT_CAPS, SHOP_POTS } from './config/pots';
 import { cyrb53, stableStringify } from './hash';
 import { SAVE_VERSION } from './state';
 
@@ -28,9 +29,10 @@ export const RULES_VERSION = 1;
 /** Toàn bộ số liệu cân bằng game. Thêm config mới vào đây để hash phát hiện thay đổi. */
 const CONFIG = {
   plants: PLANTS,
-  pots: POTS,
-  garden: { FLOOR_UNLOCKS, MAX_FLOORS, SLOTS_PER_FLOOR, START, START_STORAGE, STORAGE_UPGRADE_STEP },
-  levels: { MAX_LEVEL },
+  goods: GOODS,
+  pots: { SHOP_POTS, POT_BAG_MAX, POT_STAT_CAPS, POT_RESALE_PCT },
+  garden: { FLOOR_UNLOCKS, MAX_FLOORS, SLOTS_PER_FLOOR, START, START_STORAGE, STORAGE_UPGRADES },
+  levels: { MAX_LEVEL, XP_TABLE },
   orders: {
     MAX_ITEMS_PER_ORDER,
     ORDER_DELIVER_COOLDOWN_MS,

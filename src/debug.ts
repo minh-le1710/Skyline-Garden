@@ -1,11 +1,14 @@
 import type { Game } from './core/Game';
 import {
+  SHOP_POTS,
+  newPotInstance,
   orderSlotsForLevel,
   parseCommand,
   xpForLevel,
   type ActionResult,
   type Counts,
   type GameState,
+  type ItemId,
   type PlantId,
   type PotId,
 } from './game';
@@ -28,7 +31,8 @@ export interface DebugApi {
   addGold(n: number): void;
   addRuby(n: number): void;
   setLevel(level: number): void;
-  grant(items: { seeds?: Counts<PlantId>; crops?: Counts<PlantId>; pots?: Counts<PotId> }): void;
+  /** Tặng đồ trực tiếp (chỉ để dựng tình huống test). `pots` tạo chậu cửa hàng theo loại. */
+  grant(items: { seeds?: Counts<PlantId>; items?: Counts<ItemId>; pots?: Counts<PotId> }): void;
   reset(): void;
   screenPos(target: ScreenTarget): { x: number; y: number };
   /** @deprecated dùng screenPos({ kind: 'slot', … }) */
@@ -89,8 +93,15 @@ export function installDebug(
     grant: (items) =>
       patch((s) => {
         merge(s.seeds, items.seeds);
-        merge(s.crops, items.crops);
-        merge(s.potStock, items.pots);
+        merge(s.items, items.items);
+        for (const [potId, n] of Object.entries(items.pots ?? {}) as [PotId, number][]) {
+          const def = SHOP_POTS[potId];
+          for (let i = 0; i < n; i++) {
+            s.potBag.push(
+              newPotInstance(s, potId, def?.rarity ?? 'common', { ...(def?.stats ?? {}) }, 'reward'),
+            );
+          }
+        }
       }),
     reset: () => game.reset(),
     screenPos,

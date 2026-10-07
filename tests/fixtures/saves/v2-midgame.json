@@ -1,0 +1,188 @@
+{
+  "version": 2,
+  "createdAt": 1700000000000,
+  "lastSeenAt": 1700000000000,
+  "gold": 18,
+  "ruby": 5,
+  "xp": 6,
+  "level": 1,
+  "floors": [
+    {
+      "slots": [
+        {
+          "kind": "pot",
+          "uid": 1,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": {
+            "plantId": "sunflower",
+            "plantedAt": 1700000060000,
+            "growMs": 120000,
+            "yield": 2,
+            "pest": null
+          }
+        },
+        {
+          "kind": "pot",
+          "uid": 2,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 3,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 4,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 5,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        {
+          "kind": "pot",
+          "uid": 6,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        }
+      ]
+    },
+    {
+      "slots": [
+        {
+          "kind": "pot",
+          "uid": 7,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": {
+            "plantId": "rose",
+            "plantedAt": 1700000060000,
+            "growMs": 30000,
+            "yield": 2,
+            "pest": null
+          }
+        },
+        {
+          "kind": "pot",
+          "uid": 8,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": {
+            "plantId": "rose",
+            "plantedAt": 1700000060000,
+            "growMs": 30000,
+            "yield": 2,
+            "pest": null
+          }
+        },
+        {
+          "kind": "pot",
+          "uid": 9,
+          "potId": "clay",
+          "rarity": "common",
+          "stats": {},
+          "origin": "shop",
+          "plant": null
+        },
+        null,
+        null,
+        null
+      ]
+    }
+  ],
+  "seeds": {
+    "rose": 8,
+    "sunflower": 1
+  },
+  "items": {
+    "rose": 10
+  },
+  "potBag": [],
+  "nextUid": 10,
+  "storageCapacity": 50,
+  "storageUpgrades": 0,
+  "orders": [
+    {
+      "order": {
+        "id": 1,
+        "items": [
+          {
+            "id": "rose",
+            "qty": 6
+          }
+        ],
+        "gold": 36,
+        "xp": 5
+      },
+      "readyAt": 1700000000000
+    },
+    {
+      "order": {
+        "id": 2,
+        "items": [
+          {
+            "id": "sunflower",
+            "qty": 4
+          },
+          {
+            "id": "rose",
+            "qty": 3
+          }
+        ],
+        "gold": 66,
+        "xp": 9
+      },
+      "readyAt": 1700000000000
+    },
+    {
+      "order": null,
+      "readyAt": 1700000250000
+    }
+  ],
+  "nextOrderId": 4,
+  "rng": {
+    "orders": 2335519096,
+    "crops": 3758921811,
+    "loot": 3409355015,
+    "forge": 3110145868,
+    "daily": 1767805890,
+    "balloon": 3650275220,
+    "mine": 1607287654,
+    "pet": 1597920671,
+    "npc": 1575198929
+  },
+  "stats": {
+    "seedsPlanted": 9,
+    "harvests": 6,
+    "cropsHarvested": 12,
+    "goldEarned": 8
+  }
+}

@@ -19,12 +19,9 @@ test(
     await expect(page.getByTestId('tool-banner')).toBeVisible();
     await dragAcross(page, 0, [0, 1, 2]);
     let s = await state(page);
-    expect(s.floors[0]!.slots.slice(0, 4).map((p) => p?.plant?.plantId ?? null)).toEqual([
-      'rose',
-      'rose',
-      'rose',
-      null,
-    ]);
+    expect(
+      s.floors[0]!.slots.slice(0, 4).map((p) => (p?.kind === 'pot' ? p.plant?.plantId : null) ?? null),
+    ).toEqual(['rose', 'rose', 'rose', null]);
     expect(s.seeds.rose).toBe(8);
     await page.screenshot({ path: testInfo.outputPath('planted.png') });
 
@@ -33,16 +30,16 @@ test(
     await page.getByTestId('btn-harvest').click();
     await dragAcross(page, 0, [0, 1, 2]);
     s = await state(page);
-    expect(s.crops.rose).toBe(6);
+    expect(s.items.rose).toBe(6);
     expect(s.xp).toBe(3);
-    expect(s.floors[0]!.slots[0]!.plant).toBeNull();
+    expect(s.floors[0]!.slots[0]).toMatchObject({ kind: 'pot', plant: null });
     await page.getByTestId('btn-harvest').click();
 
     // Giao đơn hàng đầu tiên của Cú.
     const order = s.orders[0]!.order!;
     const need: Record<string, number> = {};
-    for (const { plantId, qty } of order.items) need[plantId] = qty;
-    await page.evaluate((crops) => window.__skyline!.grant({ crops }), need);
+    for (const { id, qty } of order.items) need[id] = qty;
+    await page.evaluate((items) => window.__skyline!.grant({ items }), need);
     const goldBefore = (await state(page)).gold;
     await page.getByTestId('btn-orders').click();
     await page.getByTestId('deliver-0').click();
@@ -58,7 +55,7 @@ test(
     const goldBeforeSell = s.gold;
     await page.getByTestId('sell-all-rose').click();
     s = await state(page);
-    expect(s.crops.rose).toBeUndefined();
+    expect(s.items.rose).toBeUndefined();
     expect(s.gold).toBe(goldBeforeSell + 6 * 4);
     await page.getByTestId('storage').getByRole('button', { name: 'Đóng' }).click();
 
@@ -87,7 +84,7 @@ test('chạm vào tầng khóa để mở tầng mới', async ({ page }) => {
   await expect(page.getByTestId('unlock')).toBeHidden();
   const s = await state(page);
   expect(s.floors).toHaveLength(3);
-  expect(s.gold).toBe(100 + 500 - 300);
+  expect(s.gold).toBe(100 + 500 - 400);
 });
 
 test('chạm vào cây đang lớn để xem thời gian và dùng ruby cho chín ngay', async ({ page }) => {

@@ -114,6 +114,8 @@ describe('parseCommand', () => {
       { type: 'buySeed', plantId: 'rose', qty: 0 },
       { type: 'buySeed', plantId: 'rose', qty: 1.5 },
       { type: 'buySeed', plantId: 'rose', qty: '1' },
+      { type: 'sellItem', id: 'cloudclay', qty: 1 },
+      { type: 'placePot', floor: 0, slot: 0, uid: 0 },
       { type: 'plant', floor: -1, slot: 0, plantId: 'rose' },
       { type: 'plant', floor: 0, slot: 0, plantId: '__proto__' },
       JSON.parse('{"type":"harvest","floor":0,"slot":0,"__proto__":{"x":1}}'),

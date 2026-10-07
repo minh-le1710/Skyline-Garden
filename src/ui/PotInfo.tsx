@@ -1,15 +1,15 @@
-import { formatDuration, growthProgress, isReady, remainingMs, speedUpCost } from '../game';
+import { asPot, formatDuration, growthProgress, isReady, remainingMs, speedUpCost } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
-import { PLANT_ICON, PotIcon, RUBY } from './icons';
-import { plantName, potBonus, potName } from './names';
+import { ITEM_ICON, PotIcon, RUBY } from './icons';
+import { plantName, potName, potStatsText, rarityName } from './names';
 
 /** Thẻ thông tin của chậu đang chọn. */
 export function PotInfo() {
   const game = useGame();
   const selected = game.ui.selected.value;
   if (!selected) return null;
-  const pot = game.state.value.floors[selected.floor]?.slots[selected.slot];
+  const pot = asPot(game.state.value.floors[selected.floor]?.slots[selected.slot]);
   if (!pot) return null;
   const now = game.now.value;
   const { floor, slot } = selected;
@@ -18,12 +18,14 @@ export function PotInfo() {
   if (!pot.plant) {
     return (
       <div class="pot-info" data-testid="pot-info">
-        <PotIcon potId={pot.potId} />
+        <PotIcon potId={pot.potId} rarity={pot.rarity} />
         <div class="pot-info-body">
           <strong>
             {potName(pot.potId)} · {t('pot.info.empty')}
           </strong>
-          <small>{potBonus(pot.potId)}</small>
+          <small>
+            {rarityName(pot.rarity)} · {potStatsText(pot)}
+          </small>
           <small>{t('pot.info.plantHint')}</small>
         </div>
         <button
@@ -47,7 +49,7 @@ export function PotInfo() {
   const remaining = remainingMs(plant, now);
   return (
     <div class="pot-info" data-testid="pot-info">
-      <span class="pot-info-icon">{PLANT_ICON[plant.plantId]}</span>
+      <span class="pot-info-icon">{ITEM_ICON[plant.plantId]}</span>
       <div class="pot-info-body">
         <strong>{plantName(plant.plantId)}</strong>
         <div class="progress">

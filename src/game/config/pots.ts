@@ -1,19 +1,32 @@
-import type { PotId } from '../types';
+import type { PotId, PotStats, Rarity } from '../types';
 
-export interface PotDef {
+/** Số chậu tối đa cất trong kho. */
+export const POT_BAG_MAX = 40;
+
+export interface ShopPotDef {
   id: PotId;
   price: number;
   unlockLevel: number;
-  /** % XP cộng thêm khi thu hoạch. */
-  xpBonusPct: number;
-  /** % thời gian lớn được giảm. */
-  timeReducePct: number;
+  rarity: Rarity;
+  stats: PotStats;
 }
 
-export const POTS: Record<PotId, PotDef> = {
-  clay: { id: 'clay', price: 20, unlockLevel: 1, xpBonusPct: 0, timeReducePct: 0 },
-  ceramic: { id: 'ceramic', price: 120, unlockLevel: 3, xpBonusPct: 20, timeReducePct: 0 },
-  porcelain: { id: 'porcelain', price: 300, unlockLevel: 5, xpBonusPct: 0, timeReducePct: 15 },
+/** Chậu bán ở cửa hàng. Chậu hiếm hơn chỉ có từ lò đúc. */
+export const SHOP_POTS: Partial<Record<PotId, ShopPotDef>> = {
+  clay: { id: 'clay', price: 40, unlockLevel: 1, rarity: 'common', stats: {} },
+  ceramic: { id: 'ceramic', price: 600, unlockLevel: 4, rarity: 'uncommon', stats: { xpPct: 10 } },
+  porcelain: { id: 'porcelain', price: 1500, unlockLevel: 8, rarity: 'uncommon', stats: { timePct: 8 } },
 };
 
-export const POT_LIST: PotDef[] = Object.values(POTS);
+export const SHOP_POT_LIST: ShopPotDef[] = Object.values(SHOP_POTS);
+
+/** Giới hạn chỉ số sau khi cộng dồn. */
+export const POT_STAT_CAPS: Record<keyof PotStats, number> = {
+  timePct: 30,
+  xpPct: 60,
+  goldPct: 60,
+  yieldPct: 50,
+};
+
+/** Phần trăm giá cửa hàng nhận lại khi bán chậu mua ở cửa hàng. */
+export const POT_RESALE_PCT = 25;

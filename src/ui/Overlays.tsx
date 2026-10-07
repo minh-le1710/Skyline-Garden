@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
-import { plantsUnlockedAt } from '../game';
+import { unlocksAt } from '../game';
 import { t } from '../i18n';
 import { flyers, levelUp, removeFlyer, toasts, type Flyer } from './feedback';
-import { GOLD, PLANT_ICON, RUBY } from './icons';
-import { plantName } from './names';
+import { GOLD, ITEM_ICON, PotIcon, RUBY } from './icons';
+import { plantName, potName } from './names';
 
 export function Toasts() {
   return (
@@ -59,7 +59,8 @@ export function FlyLayer() {
 export function LevelUpModal() {
   const info = levelUp.value;
   if (!info) return null;
-  const newPlants = plantsUnlockedAt(info.level);
+  const unlocked = unlocksAt(info.level);
+  const hasNew = unlocked.plants.length + unlocked.pots.length + unlocked.floors.length > 0;
   const close = () => (levelUp.value = null);
   return (
     <div class="sheet-backdrop center" onClick={(e) => e.target === e.currentTarget && close()}>
@@ -75,13 +76,23 @@ export function LevelUpModal() {
             {RUBY} +{info.ruby}
           </span>
         </div>
-        {newPlants.length > 0 && (
+        {hasNew && (
           <>
             <p>{t('levelUp.newPlants')}</p>
             <div class="chips center">
-              {newPlants.map((id) => (
+              {unlocked.plants.map((id) => (
                 <span key={id} class="chip">
-                  {PLANT_ICON[id]} {plantName(id)}
+                  {ITEM_ICON[id]} {plantName(id)}
+                </span>
+              ))}
+              {unlocked.pots.map((id) => (
+                <span key={id} class="chip">
+                  <PotIcon potId={id} /> {potName(id)}
+                </span>
+              ))}
+              {unlocked.floors.map((f) => (
+                <span key={f} class="chip">
+                  ☁️ {t('levelUp.floor', { n: f + 1 })}
                 </span>
               ))}
             </div>

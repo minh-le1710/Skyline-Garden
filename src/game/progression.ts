@@ -1,10 +1,13 @@
+import { FLOOR_UNLOCKS } from './config/garden';
 import { MAX_LEVEL, levelUpReward, xpForLevel } from './config/levels';
-import { PLANT_LIST } from './config/plants';
 import { orderSlotsForLevel } from './config/orders';
-import type { GameEvent, GameState, PlantId } from './types';
+import { PLANT_LIST } from './config/plants';
+import { SHOP_POT_LIST } from './config/pots';
+import type { GameEvent, GameState, PlantId, PotId } from './types';
 
 /** Cộng XP và xử lý lên cấp (có thể lên nhiều cấp một lúc). Sửa trực tiếp `state`. */
 export function addXp(state: GameState, amount: number, now: number, events: GameEvent[]): void {
+  if (amount <= 0) return;
   state.xp += amount;
   while (state.level < MAX_LEVEL && state.xp >= xpForLevel(state.level + 1)) {
     state.level++;
@@ -37,5 +40,11 @@ export function levelProgress(state: GameState): { current: number; needed: numb
 export const unlockedPlants = (level: number): PlantId[] =>
   PLANT_LIST.filter((p) => p.unlockLevel <= level).map((p) => p.id);
 
-export const plantsUnlockedAt = (level: number): PlantId[] =>
-  PLANT_LIST.filter((p) => p.unlockLevel === level).map((p) => p.id);
+/** Những gì mở ra đúng ở cấp `level` (hiện trong hộp thoại lên cấp). */
+export function unlocksAt(level: number): { plants: PlantId[]; pots: PotId[]; floors: number[] } {
+  return {
+    plants: PLANT_LIST.filter((p) => p.unlockLevel === level).map((p) => p.id),
+    pots: SHOP_POT_LIST.filter((p) => p.unlockLevel === level).map((p) => p.id),
+    floors: FLOOR_UNLOCKS.flatMap((f, i) => (i >= 2 && f.level === level ? [i] : [])),
+  };
+}

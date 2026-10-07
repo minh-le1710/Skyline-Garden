@@ -1,4 +1,4 @@
-import { POT_IDS, count, isReady, type ActionError, type ActionResult } from '../game';
+import { asPot, bestPotUid, isReady, nextUidInStack, type ActionError, type ActionResult } from '../game';
 import type { Game, Tool } from '../core/Game';
 import type { CameraScroller } from './CameraScroller';
 import type { PickTarget, Picker } from './Picker';
@@ -7,7 +7,14 @@ import type { PickTarget, Picker } from './Picker';
 const TAP_SLOP = 8;
 
 /** Khi kéo qua nhiều chậu, các lỗi này là bình thường (vd. cây chưa chín) nên không báo. */
-const DRAG_QUIET: ActionError[] = ['SLOT_BUSY', 'NOT_READY', 'NO_POT', 'NOTHING_PLANTED', 'SLOT_OCCUPIED'];
+const DRAG_QUIET: ActionError[] = [
+  'SLOT_BUSY',
+  'NOT_READY',
+  'NO_POT',
+  'NOTHING_PLANTED',
+  'SLOT_OCCUPIED',
+  'NOT_A_POT',
+];
 
 type Mode = 'idle' | 'pending' | 'scroll' | 'tool';
 
@@ -128,7 +135,10 @@ export class InputController {
     } else if (tool.kind === 'harvest') {
       result = this.game.exec({ type: 'harvest', floor, slot }, { quiet });
     } else {
-      result = this.game.exec({ type: 'placePot', floor, slot, potId: tool.potId }, { quiet });
+      // Mỗi ô lấy chiếc kế tiếp trong chồng chậu đang cầm.
+      const uid = nextUidInStack(this.game.state.value, tool.stack);
+      if (uid === null) return;
+      result = this.game.exec({ type: 'placePot', floor, slot, uid }, { quiet });
     }
     // Mỗi loại lỗi chỉ báo một lần trong một lần kéo.
     if (!result.ok) this.reported.add(result.error);
@@ -147,16 +157,17 @@ export class InputController {
     }
     const { floor, slot } = target;
     const state = this.game.state.value;
-    const pot = state.floors[floor]?.slots[slot];
-    if (!pot) {
-      // Ô trống: đặt chậu có sẵn trong kho, nếu không có thì mở cửa hàng chậu.
+    const content = state.floors[floor]?.slots[slot];
+    if (!content) {
+      // Ô trống: đặt chậu tốt nhất trong kho, nếu không có thì mở cửa hàng chậu.
       ui.selected.value = null;
-      const potId = POT_IDS.find((id) => count(state.potStock, id) > 0);
-      if (potId) this.game.exec({ type: 'placePot', floor, slot, potId });
+      const uid = bestPotUid(state);
+      if (uid !== null) this.game.exec({ type: 'placePot', floor, slot, uid });
       else this.game.events.emit({ type: 'needPot' });
       return;
     }
-    if (pot.plant && isReady(pot.plant, this.game.clock.now())) {
+    const pot = asPot(content);
+    if (pot?.plant && isReady(pot.plant, this.game.clock.now())) {
       ui.selected.value = null;
       this.game.exec({ type: 'harvest', floor, slot });
       return;
