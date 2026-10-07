@@ -1,4 +1,4 @@
-import { checkInvariants } from './invariants';
+import { checkStructure, normalizeLoaded } from './invariants';
 import { migrate } from './migrations';
 import { SAVE_VERSION } from './state';
 import type { GameState } from './types';
@@ -42,15 +42,18 @@ export function readSave(json: string | null): LoadResult {
   }
   const version = raw.version as number;
   if (version > SAVE_VERSION) return { status: 'tooNew', raw: json, version };
-  const data = migrate(raw, version, SAVE_VERSION);
-  if (!data) return { status: 'corrupt', raw: json, reason: `không nâng cấp được từ v${version}` };
-  const problems = shapeProblems(data);
-  if (problems) return { status: 'corrupt', raw: json, reason: problems };
-  return {
-    status: 'ok',
-    state: data as unknown as GameState,
-    migratedFrom: version < SAVE_VERSION ? version : null,
-  };
+  // Migration và chuẩn hóa chạy trên dữ liệu chưa kiểm tra: mọi lỗi đều tính là save hỏng, không làm sập game.
+  try {
+    const data = migrate(raw, version, SAVE_VERSION);
+    if (!data) return { status: 'corrupt', raw: json, reason: `không nâng cấp được từ v${version}` };
+    const problems = shapeProblems(data);
+    if (problems) return { status: 'corrupt', raw: json, reason: problems };
+    const lastSeenAt = Number.isFinite(data.lastSeenAt) ? (data.lastSeenAt as number) : 0;
+    const state = normalizeLoaded(data as unknown as GameState, lastSeenAt);
+    return { status: 'ok', state, migratedFrom: version < SAVE_VERSION ? version : null };
+  } catch (err) {
+    return { status: 'corrupt', raw: json, reason: `lỗi khi đọc save v${version}: ${String(err)}` };
+  }
 }
 
 /** Đọc save; null nếu không có hoặc không dùng được. */
@@ -68,7 +71,7 @@ export function saveGame(storage: KeyValueStore, state: GameState): void {
   storage.setItem(SAVE_KEY, serialize(state));
 }
 
-/** Kiểm tra cấu trúc và bất biến, để save hỏng hoặc bị sửa tay không làm sập game. */
+/** Kiểm tra cấu trúc (không phụ thuộc số liệu cân bằng), để save hỏng hoặc bị sửa tay không làm sập game. */
 function shapeProblems(d: Record<string, unknown>): string | null {
   const required = ['floors', 'orders', 'seeds', 'items', 'potBag', 'rng', 'stats'];
   for (const key of required) if (!(key in d)) return `thiếu trường ${key}`;
@@ -82,10 +85,6 @@ function shapeProblems(d: Record<string, unknown>): string | null {
   ) {
     return 'kho không hợp lệ';
   }
-  try {
-    const broken = checkInvariants(d as unknown as GameState);
-    return broken.length ? broken.slice(0, 3).join('; ') : null;
-  } catch (err) {
-    return `lỗi khi kiểm tra: ${String(err)}`;
-  }
+  const broken = checkStructure(d as unknown as GameState);
+  return broken.length ? broken.slice(0, 3).join('; ') : null;
 }

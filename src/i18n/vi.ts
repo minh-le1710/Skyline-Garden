@@ -87,6 +87,19 @@ export const vi = {
   'machine.maxLevel': 'Máy đã ở cấp tối đa',
   'machine.move': 'Di chuyển',
   'machine.makes': 'Làm: {list}',
+  'machine.forgeOdds': 'Tỉ lệ: {odds}',
+
+  'item.forge_basic': 'Đúc chậu thường',
+  'item.forge_glazed': 'Đúc chậu men',
+  'item.forge_sunfired': 'Đúc chậu nung nắng',
+  'item.forge_starlit': 'Đúc chậu ánh sao',
+
+  'forge.title': 'Chậu mới!',
+  'forge.ok': 'Tuyệt!',
+  'pots.place': 'Đặt',
+  'pots.sell': 'Bán {gold}',
+  'pots.salvage': 'Phân rã',
+  'pot.info.store': 'Cất chậu',
 
   'rarity.common': 'Thường',
   'rarity.uncommon': 'Tốt',
@@ -238,6 +251,8 @@ export const vi = {
   'error.NOTHING_TO_COLLECT': 'Chưa có hàng để lấy',
   'error.NO_JOB': 'Máy đang không làm gì',
   'error.JOB_STARTED': 'Mẻ này đã bắt đầu, không hủy được',
+  'error.CANNOT_SELL': 'Chậu đúc không bán được, hãy phân rã để lấy vật liệu',
+  'error.CANNOT_SALVAGE': 'Chậu cửa hàng không phân rã được, hãy bán lại',
   'error.NOTHING_TO_DO': 'Không có gì để làm ở đây',
   'error.SLOT_OCCUPIED': 'Ô này đã có chậu',
   'error.SLOT_BUSY': 'Chậu này đang có cây',

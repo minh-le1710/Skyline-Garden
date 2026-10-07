@@ -1,5 +1,5 @@
 import fc from 'fast-check';
-import { GOOD_IDS, MACHINE_IDS, PLANT_IDS, type Command } from '../src/game';
+import { FORGE_IDS, GOOD_IDS, MACHINE_IDS, PLANT_IDS, type Command } from '../src/game';
 
 // Bộ sinh lệnh ngẫu nhiên cho property test. Cố ý gồm cả chỉ số ngoài phạm vi để thử nhánh lỗi.
 const floor = fc.integer({ min: 0, max: 9 });
@@ -41,7 +41,7 @@ export const commandArb: fc.Arbitrary<Command> = fc.oneof(
       type: fc.constant('startJob' as const),
       floor,
       slot,
-      recipe: fc.constantFrom(...GOOD_IDS),
+      recipe: fc.constantFrom(...GOOD_IDS, ...FORGE_IDS),
     }),
   },
   { weight: 2, arbitrary: fc.record({ type: fc.constant('collectMachine' as const), floor, slot }) },

@@ -91,3 +91,39 @@ describe('v1 → v2', () => {
     expect(result.status === 'ok' && [result.state.level, result.state.xp]).toEqual([4, 150 + 80]);
   });
 });
+
+describe('tải save an toàn', () => {
+  it('lỗi trong migration được coi là save hỏng, không làm sập game', () => {
+    for (const bad of [
+      { version: 1, floors: null, orders: [] },
+      { version: 1, orders: [] },
+      { version: 1, floors: [{ slots: null }], orders: [] },
+      { version: 1, floors: [], orders: [{ order: {} }] },
+    ]) {
+      expect(() => readSave(JSON.stringify(bad))).not.toThrow();
+      expect(readSave(JSON.stringify(bad)).status).toBe('corrupt');
+    }
+  });
+
+  it('đổi số liệu cân bằng không làm save cũ thành "hỏng": các trường suy ra được tính lại', () => {
+    const s = JSON.parse(serialize(midgame()));
+    s.storageUpgrades = 25; // nhiều hơn bảng hiện tại
+    s.storageCapacity = 999;
+    s.level = 7; // không khớp XP
+    s.orders = s.orders.slice(0, 1);
+    const r = readSave(JSON.stringify(s));
+    expect(r.status).toBe('ok');
+    if (r.status !== 'ok') return;
+    expect(r.state.storageUpgrades).toBe(20);
+    expect(checkInvariants(r.state)).toEqual([]);
+  });
+
+  it('save cấp tối đa của v1 vẫn là cấp 50', () => {
+    const v1 = JSON.parse(readFileSync(`${DIR}/v1-midgame.json`, 'utf8'));
+    v1.level = 50;
+    v1.xp = 20_000;
+    while (v1.orders.length < 6) v1.orders.push({ order: null, readyAt: 0 });
+    const r = readSave(JSON.stringify(v1));
+    expect(r.status === 'ok' && r.state.level).toBe(50);
+  });
+});

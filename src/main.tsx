@@ -74,7 +74,8 @@ function boot(): void {
   let debug: DebugApi | null = null;
   if (new URLSearchParams(location.search).has('debug')) debug = installDebug(game, scene, garden, scroller);
 
-  holdTabLock(() => game.block('otherTab'));
+  // Tab chạy bản cũ (save mới hơn) không bao giờ lưu nên không cần khóa, cũng không được giành khóa của tab đang chơi.
+  if (game.blocked.value !== 'tooNew') holdTabLock(() => game.block('otherTab'));
   game.start();
 
   let last = performance.now();

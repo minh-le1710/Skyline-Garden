@@ -31,6 +31,12 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
       case 'machineSpeedUp':
         add('rubySpent', e.ruby);
         break;
+      case 'potForged':
+        add('potsForged', 1);
+        break;
+      case 'potSold':
+        add('goldEarned', e.gold);
+        break;
       case 'goodsCollected':
         add(
           'goodsMade',

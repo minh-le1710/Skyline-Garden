@@ -5,6 +5,7 @@ export * from './pots';
 export * from './pests';
 export * from './machines';
 export * from './config/machines';
+export * from './config/forge';
 export * from './rewards';
 export * from './config/pests';
 export * from './meta';

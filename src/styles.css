@@ -1016,3 +1016,24 @@ h3 {
   color: var(--danger);
   font-weight: 800;
 }
+
+.forge-reveal {
+  border: 4px solid var(--rarity, #9aa5b1);
+}
+
+.forge-burst {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 30%, var(--rarity, #9aa5b1) 32%, transparent 70%);
+  animation: spin 6s linear infinite;
+}
+
+.forge-burst .pot-icon {
+  width: 56px;
+  height: 46px;
+  animation: spin 6s linear infinite reverse;
+}

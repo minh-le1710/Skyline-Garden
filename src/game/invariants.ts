@@ -12,6 +12,7 @@ import {
   isPotId,
   isRarity,
 } from './ids';
+import { recipeDef } from './machines';
 import { levelForXp } from './progression';
 import { storageUsed } from './state';
 import {
@@ -25,26 +26,29 @@ import {
 } from './types';
 
 /**
- * Các điều kiện luôn phải đúng với mọi state hợp lệ. Trả về danh sách vi phạm (rỗng là ổn).
- * Dùng trong property test, khi tải save, và ở chế độ debug sau mỗi lệnh.
+ * Kiểm tra cấu trúc và kiểu dữ liệu: số nguyên không âm, id hợp lệ, hình dạng mảng/ô.
+ * KHÔNG phụ thuộc số liệu cân bằng game, nên dùng được khi tải save (đổi cân bằng không làm save cũ "hỏng").
  */
-export function checkInvariants(s: GameState): string[] {
+export function checkStructure(s: GameState): string[] {
   const errors: string[] = [];
   const expect = (ok: boolean, message: string) => {
     if (!ok) errors.push(message);
   };
 
-  for (const key of ['gold', 'ruby', 'xp', 'nextOrderId', 'storageUpgrades', 'nextUid'] as const) {
+  for (const key of [
+    'gold',
+    'ruby',
+    'xp',
+    'nextOrderId',
+    'storageUpgrades',
+    'nextUid',
+    'storageCapacity',
+  ] as const) {
     expect(isNonNegInt(s[key]), `${key} phải là số nguyên không âm (đang là ${s[key]})`);
   }
-  expect(isPositiveInt(s.level) && s.level <= MAX_LEVEL, `level không hợp lệ: ${s.level}`);
-  expect(s.level === levelForXp(s.xp), `level ${s.level} không khớp XP ${s.xp}`);
-  expect(s.storageUpgrades <= STORAGE_UPGRADES.length, `nâng kho quá số mức: ${s.storageUpgrades}`);
-  expect(
-    s.storageCapacity === storageCapacityAfter(s.storageUpgrades),
-    `sức chứa kho ${s.storageCapacity} không khớp số lần nâng cấp`,
-  );
-  expect(storageUsed(s) <= s.storageCapacity, `kho vượt sức chứa: ${storageUsed(s)}/${s.storageCapacity}`);
+  expect(isPositiveInt(s.level), `level không hợp lệ: ${s.level}`);
+  for (const key of ['createdAt', 'lastSeenAt'] as const)
+    expect(Number.isFinite(s[key]), `${key} không hợp lệ`);
 
   const checkCounts = (name: string, counts: Counts<string>, valid: (id: unknown) => boolean) => {
     for (const [id, n] of Object.entries(counts)) {
@@ -67,17 +71,21 @@ export function checkInvariants(s: GameState): string[] {
     uids.add(p.uid);
     expect(isPotId(p.potId) && isRarity(p.rarity), `${where}: loại chậu không hợp lệ`);
     expect(['shop', 'forge', 'reward', 'legacy'].includes(p.origin), `${where}: nguồn chậu lạ`);
+    expect(typeof p.stats === 'object' && p.stats !== null, `${where}: chỉ số chậu không hợp lệ`);
     for (const [stat, v] of Object.entries(p.stats ?? {})) {
       expect(POT_STATS.includes(stat as never) && isPositiveInt(v), `${where}: chỉ số ${stat} không hợp lệ`);
     }
   };
-  expect(s.potBag.length <= POT_BAG_MAX, `kho chậu vượt ${POT_BAG_MAX}`);
+  expect(Array.isArray(s.potBag), 'potBag không phải mảng');
   s.potBag.forEach((p, i) => checkPot(p, `potBag[${i}]`));
 
-  expect(s.floors.length >= 1 && s.floors.length <= MAX_FLOORS, `số tầng không hợp lệ: ${s.floors.length}`);
+  expect(s.floors.length >= 1, `số tầng không hợp lệ: ${s.floors.length}`);
   s.floors.forEach((floor, f) => {
-    expect(floor.slots.length === SLOTS_PER_FLOOR, `tầng ${f} có ${floor.slots.length} ô`);
-    floor.slots.forEach((content, i) => {
+    expect(
+      Array.isArray(floor?.slots) && floor.slots.length === SLOTS_PER_FLOOR,
+      `tầng ${f} không đủ ${SLOTS_PER_FLOOR} ô`,
+    );
+    floor.slots?.forEach((content, i) => {
       const where = `ô ${f}:${i}`;
       if (content === null) return;
       if (content.kind === 'pot') {
@@ -88,15 +96,17 @@ export function checkInvariants(s: GameState): string[] {
           expect(isNonNegInt(p.plantedAt) && isNonNegInt(p.growMs), `${where}: thời gian cây không hợp lệ`);
           expect(isPositiveInt(p.yield), `${where}: sản lượng không hợp lệ`);
           if (p.pest !== null) {
-            expect(PEST_IDS.includes(p.pest.id), `${where}: sâu lạ`);
-            expect(p.pest.at <= p.pest.leaveAt, `${where}: thời gian sâu không hợp lệ`);
+            expect(PEST_IDS.includes(p.pest?.id), `${where}: sâu lạ`);
+            expect(p.pest?.at <= p.pest?.leaveAt, `${where}: thời gian sâu không hợp lệ`);
           }
         }
       } else if (content.kind === 'machine') {
         expect(isMachineId(content.machineId), `${where}: máy lạ`);
         expect(isPositiveInt(content.level), `${where}: cấp máy không hợp lệ`);
+        expect(Array.isArray(content.queue), `${where}: hàng đợi không hợp lệ`);
         let prevDone = 0;
-        for (const job of content.queue) {
+        for (const job of content.queue ?? []) {
+          expect(recipeDef(job.recipe) !== null, `${where}: công thức lạ`);
           expect(job.startAt <= job.doneAt && job.startAt >= prevDone, `${where}: hàng đợi máy sai thứ tự`);
           prevDone = job.doneAt;
         }
@@ -106,16 +116,59 @@ export function checkInvariants(s: GameState): string[] {
     });
   });
 
-  expect(s.orders.length === orderSlotsForLevel(s.level), `bảng đơn có ${s.orders.length} chỗ`);
+  expect(Array.isArray(s.orders), 'orders không phải mảng');
   for (const slot of s.orders) {
-    const order = slot.order;
+    expect(Number.isFinite(slot?.readyAt), 'thời điểm đơn mới không hợp lệ');
+    const order = slot?.order;
     if (!order) continue;
     expect(order.id < s.nextOrderId, `đơn ${order.id} có id không nhỏ hơn nextOrderId`);
-    expect(order.items.length > 0, `đơn ${order.id} rỗng`);
-    for (const item of order.items) {
+    expect(Array.isArray(order.items) && order.items.length > 0, `đơn ${order.id} rỗng`);
+    for (const item of order.items ?? []) {
       expect(isBarnItemId(item.id) && isPositiveInt(item.qty), `món lạ trong đơn ${order.id}`);
     }
     expect(isPositiveInt(order.gold) && isPositiveInt(order.xp), `thưởng đơn ${order.id} không hợp lệ`);
   }
   return errors;
+}
+
+/** Các điều kiện phụ thuộc số liệu cân bằng hiện tại (bảng XP, kho, bảng đơn…). */
+export function checkBalance(s: GameState): string[] {
+  const errors: string[] = [];
+  const expect = (ok: boolean, message: string) => {
+    if (!ok) errors.push(message);
+  };
+  expect(s.level <= MAX_LEVEL, `level vượt tối đa: ${s.level}`);
+  expect(s.level === levelForXp(s.xp), `level ${s.level} không khớp XP ${s.xp}`);
+  expect(s.storageUpgrades <= STORAGE_UPGRADES.length, `nâng kho quá số mức: ${s.storageUpgrades}`);
+  expect(
+    s.storageCapacity === storageCapacityAfter(s.storageUpgrades),
+    `sức chứa kho ${s.storageCapacity} không khớp số lần nâng cấp`,
+  );
+  expect(storageUsed(s) <= s.storageCapacity, `kho vượt sức chứa: ${storageUsed(s)}/${s.storageCapacity}`);
+  expect(s.potBag.length <= POT_BAG_MAX, `kho chậu vượt ${POT_BAG_MAX}`);
+  expect(s.floors.length <= MAX_FLOORS, `số tầng vượt tối đa: ${s.floors.length}`);
+  expect(s.orders.length >= orderSlotsForLevel(s.level), `bảng đơn chỉ có ${s.orders.length} chỗ`);
+  return errors;
+}
+
+/**
+ * Mọi điều kiện luôn phải đúng với state sinh ra từ các lệnh. Trả về danh sách vi phạm (rỗng là ổn).
+ * Dùng trong property test, ở chế độ debug sau mỗi lệnh, và khi server replay.
+ */
+export function checkInvariants(s: GameState): string[] {
+  const structure = checkStructure(s);
+  return structure.length ? structure : checkBalance(s);
+}
+
+/**
+ * Sửa các trường suy ra từ số liệu cân bằng khi tải save, thay vì coi save là hỏng.
+ * Không bao giờ làm mất đồ: kho vượt sức chứa vẫn giữ nguyên (lệnh sau đó tự từ chối thêm đồ).
+ */
+export function normalizeLoaded(s: GameState, now: number): GameState {
+  const out = structuredClone(s);
+  out.level = levelForXp(out.xp);
+  out.storageUpgrades = Math.min(out.storageUpgrades, STORAGE_UPGRADES.length);
+  out.storageCapacity = storageCapacityAfter(out.storageUpgrades);
+  while (out.orders.length < orderSlotsForLevel(out.level)) out.orders.push({ order: null, readyAt: now });
+  return out;
 }

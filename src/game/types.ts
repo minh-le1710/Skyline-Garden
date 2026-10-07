@@ -280,7 +280,11 @@ export type GameEvent =
   | { type: 'jobCanceled'; floor: number; slot: number; recipe: RecipeId }
   | { type: 'goodsCollected'; floor: number; slot: number; items: Counts<GoodId>; xp: number }
   | { type: 'machineSpeedUp'; floor: number; slot: number; ruby: number }
-  | { type: 'slotsSwapped'; from: { floor: number; slot: number }; to: { floor: number; slot: number } };
+  | { type: 'slotsSwapped'; from: { floor: number; slot: number }; to: { floor: number; slot: number } }
+  | { type: 'potForged'; floor: number; slot: number; pot: PotInstance; xp: number }
+  | { type: 'potStored'; floor: number; slot: number; uid: number }
+  | { type: 'potSold'; uid: number; gold: number }
+  | { type: 'potSalvaged'; uid: number; items: Counts<ChestItemId> };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -311,6 +315,8 @@ export const ACTION_ERRORS = [
   'NOTHING_TO_COLLECT',
   'NO_JOB',
   'JOB_STARTED',
+  'CANNOT_SELL',
+  'CANNOT_SALVAGE',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

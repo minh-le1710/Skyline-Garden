@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Game } from '../core/Game';
-import type { ItemId } from '../game';
+import type { ItemId, PotInstance } from '../game';
 import { t } from '../i18n';
 import { GOLD, ITEM_ICON, XP } from './icons';
 import { machineName, plantName, potName } from './names';
@@ -23,6 +23,9 @@ export interface Flyer {
 
 export const toasts = signal<Toast[]>([]);
 export const flyers = signal<Flyer[]>([]);
+/** Chậu vừa đúc xong (hiện màn mở chậu). */
+export const forgeReveal = signal<PotInstance | null>(null);
+
 /** Cấp vừa đạt được (hiện hộp thoại chúc mừng), null nếu không có. */
 export const levelUp = signal<{ level: number; gold: number; ruby: number } | null>(null);
 
@@ -124,6 +127,16 @@ export function connectFeedback(
         fly(XP, `+${event.xp}`, { x: from.x, y: from.y - 24 }, 'xp');
         break;
       }
+      case 'potForged':
+        forgeReveal.value = event.pot;
+        break;
+      case 'potSold':
+        fly(GOLD, `+${event.gold}`, lastPointer, 'gold');
+        break;
+      case 'potSalvaged':
+        for (const [id, n] of Object.entries(event.items))
+          fly(ITEM_ICON[id as ItemId], `+${n}`, lastPointer, 'storage');
+        break;
       case 'machineBuilt':
         showToast(t('toast.machineBuilt', { name: machineName(event.machineId) }), 'success');
         break;

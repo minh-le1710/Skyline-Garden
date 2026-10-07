@@ -7,7 +7,7 @@ import {
   createNewGame,
   offlineSummary,
   readSave,
-  saveGame,
+  serialize,
   step,
   type ActionError,
   type ActionResult,
@@ -88,12 +88,18 @@ export class Game {
   readonly blocked = signal<BlockReason | null>(null);
 
   private saveTimer: ReturnType<typeof setTimeout> | undefined;
+  /**
+   * Nội dung save mà tab này đọc/ghi lần cuối. Nếu khóa SAVE_KEY khác giá trị này lúc sắp ghi,
+   * nghĩa là tab khác đã ghi: tab này tạm dừng thay vì ghi đè.
+   */
+  private lastWritten: string | null = null;
   private intervals: ReturnType<typeof setInterval>[] = [];
   private pendingNotices: AppEvent[] = [];
 
   constructor(private readonly storage: Storage | null) {
     const now = this.clock.now();
     const raw = storage?.getItem(SAVE_KEY) ?? null;
+    this.lastWritten = raw;
     const loaded = readSave(raw);
     let state: GameState;
     switch (loaded.status) {
@@ -127,8 +133,14 @@ export class Game {
   }
 
   /** Tạm dừng game (vd. game đã mở ở tab khác). */
+  /**
+   * Tạm dừng game. KHÔNG lưu lần cuối: tab đã mất quyền (tab khác đang chơi) mà ghi thì sẽ đè tiến độ mới hơn.
+   * Lý do 'tooNew' (save của bản mới hơn) mạnh hơn và không bị thay.
+   */
   block(reason: BlockReason): void {
-    this.save();
+    clearTimeout(this.saveTimer);
+    this.saveTimer = undefined;
+    if (this.blocked.value === 'tooNew') return;
     this.blocked.value = reason;
   }
 
@@ -146,6 +158,10 @@ export class Game {
       if (document.visibilityState === 'hidden') flush();
     });
     window.addEventListener('pagehide', flush);
+    // Tab khác ghi save (sự kiện 'storage' chỉ báo thay đổi từ tab khác): dừng ngay, không ghi đè.
+    window.addEventListener('storage', (e) => {
+      if (e.key === SAVE_KEY && e.newValue !== this.lastWritten) this.block('otherTab');
+    });
   }
 
   /** Bật ở chế độ debug: kiểm tra bất biến sau mỗi lệnh và báo lỗi ra console (test E2E bắt được). */
@@ -204,7 +220,13 @@ export class Game {
     this.saveTimer = undefined;
     if (!this.storage || this.blocked.value) return;
     try {
-      saveGame(this.storage, { ...this.state.value, lastSeenAt: this.clock.now() });
+      if (this.storage.getItem(SAVE_KEY) !== this.lastWritten) {
+        this.block('otherTab');
+        return;
+      }
+      const json = serialize({ ...this.state.value, lastSeenAt: this.clock.now() });
+      this.storage.setItem(SAVE_KEY, json);
+      this.lastWritten = json;
     } catch (err) {
       console.warn('Không lưu được game', err);
     }

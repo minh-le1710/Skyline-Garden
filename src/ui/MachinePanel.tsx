@@ -1,6 +1,8 @@
 import {
+  FORGES,
   GOODS,
   ITEMS,
+  RARITIES,
   MACHINE_LEVELS,
   MACHINE_MAX_LEVEL,
   MACHINE_UPGRADES,
@@ -14,14 +16,15 @@ import {
   recipeDef,
   recipesFor,
   speedUpCost,
-  type BarnItemId,
+  type ForgeId,
+  type GoodId,
   type ItemId,
   type Machine,
 } from '../game';
 import { formatNumber, t } from '../i18n';
 import { useGame } from './context';
 import { GOLD, ITEM_ICON, RUBY, XP } from './icons';
-import { itemName, machineName } from './names';
+import { machineName, rarityName, recipeIcon, recipeName } from './names';
 import { Sheet } from './Sheet';
 
 /** Bảng điều khiển máy chế biến: hàng đợi, công thức, nâng cấp, di chuyển. */
@@ -60,7 +63,7 @@ export function MachinePanel() {
             const progress = running ? (now - job.startAt) / (job.doneAt - job.startAt) : done ? 1 : 0;
             return (
               <li key={`${job.recipe}-${job.startAt}`} class={`queue-item ${done ? 'done' : ''}`}>
-                <span class="queue-icon">{ITEM_ICON[job.recipe as ItemId] ?? '🎁'}</span>
+                <span class="queue-icon">{recipeIcon(job.recipe)}</span>
                 <div class="queue-body">
                   <small>
                     {done
@@ -115,12 +118,12 @@ export function MachinePanel() {
           const ok = hasItems(state, def.inputs) && state.gold >= def.gold;
           return (
             <li key={recipe} class={`card ${locked ? 'locked' : ''}`} data-testid={`recipe-${recipe}`}>
-              <span class="card-icon">{ITEM_ICON[recipe as ItemId] ?? '🎁'}</span>
+              <span class="card-icon">{recipeIcon(recipe)}</span>
               <div class="card-body">
-                <strong>{itemName(recipe as ItemId)}</strong>
+                <strong>{recipeName(recipe)}</strong>
                 <small class="inputs">
                   {Object.entries(def.inputs).map(([id, n]) => {
-                    const have = count(state.items, id as BarnItemId);
+                    const have = count(state.items, id as ItemId);
                     return (
                       <span key={id} class={have >= (n ?? 0) ? 'ok' : 'missing'}>
                         {ITEM_ICON[id as ItemId]} {have}/{n}
@@ -128,10 +131,22 @@ export function MachinePanel() {
                     );
                   })}
                 </small>
-                <small>
-                  ⏱ {formatDuration(jobDurationMs(def, m))} · {GOLD} {ITEMS[recipe as ItemId]?.sellPrice ?? 0}{' '}
-                  · {XP} {GOODS[recipe as keyof typeof GOODS]?.xp ?? 0}
-                </small>
+                {def.output === 'pot' ? (
+                  <small>
+                    ⏱ {formatDuration(jobDurationMs(def, m))} · {GOLD} −{formatNumber(def.gold)} ·{' '}
+                    {t('machine.forgeOdds', {
+                      odds: FORGES[recipe as ForgeId].odds
+                        .map((pct, i) => (pct ? `${rarityName(RARITIES[i]!)} ${pct}%` : ''))
+                        .filter(Boolean)
+                        .join(', '),
+                    })}
+                  </small>
+                ) : (
+                  <small>
+                    ⏱ {formatDuration(jobDurationMs(def, m))} · {GOLD} {ITEMS[recipe as ItemId].sellPrice} ·{' '}
+                    {XP} {GOODS[recipe as GoodId].xp}
+                  </small>
+                )}
               </div>
               {locked ? (
                 <span class="lock-note">{t('machine.needLevel', { n: def.unlockLevel })}</span>

@@ -1,9 +1,9 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import { unlocksAt } from '../game';
 import { t } from '../i18n';
-import { flyers, levelUp, removeFlyer, toasts, type Flyer } from './feedback';
+import { flyers, forgeReveal, levelUp, removeFlyer, toasts, type Flyer } from './feedback';
 import { GOLD, ITEM_ICON, PotIcon, RUBY } from './icons';
-import { plantName, potName } from './names';
+import { plantName, potName, potStatsText, rarityName } from './names';
 
 export function Toasts() {
   return (
@@ -100,6 +100,30 @@ export function LevelUpModal() {
         )}
         <button class="btn primary big" onClick={close}>
           {t('levelUp.ok')}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+/** Màn mở chậu vừa đúc: hiệu ứng theo độ hiếm + chỉ số. */
+export function ForgeReveal() {
+  const pot = forgeReveal.value;
+  if (!pot) return null;
+  const close = () => (forgeReveal.value = null);
+  return (
+    <div class="sheet-backdrop center" onClick={(e) => e.target === e.currentTarget && close()}>
+      <section class={`levelup forge-reveal rarity-${pot.rarity}`} role="dialog" data-testid="forge-reveal">
+        <div class="forge-burst">
+          <PotIcon potId={pot.potId} rarity={pot.rarity} />
+        </div>
+        <h2>{t('forge.title')}</h2>
+        <p>
+          <strong>{potName(pot.potId)}</strong> · {rarityName(pot.rarity)}
+        </p>
+        <p>{potStatsText(pot)}</p>
+        <button class="btn primary big" onClick={close}>
+          {t('forge.ok')}
         </button>
       </section>
     </div>

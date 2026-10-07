@@ -1,6 +1,7 @@
 import type { Game } from './core/Game';
 import {
   SHOP_POTS,
+  checkInvariants,
   newPotInstance,
   orderSlotsForLevel,
   parseCommand,
@@ -58,9 +59,12 @@ export function installDebug(
   scroller: CameraScroller,
 ): DebugApi {
   game.debugChecks = true;
+  /** Sửa state trực tiếp. Từ chối (ném lỗi) nếu kết quả vi phạm bất biến, để không lưu một save "hỏng". */
   const patch = (fn: (s: GameState) => void) => {
     const next = structuredClone(game.state.value);
     fn(next);
+    const broken = checkInvariants(next);
+    if (broken.length) throw new Error(`[debug] patch vi phạm bất biến: ${broken.join('; ')}`);
     game.state.value = next;
     game.save();
   };
@@ -82,7 +86,7 @@ export function installDebug(
       return cmd ? game.exec(cmd) : { ok: false, error: 'BAD_COMMAND' };
     },
     skip(seconds) {
-      game.clock.skip(seconds * 1000);
+      game.clock.skip(Math.round(seconds * 1000));
       game.update();
     },
     addGold: (n) => patch((s) => void (s.gold += n)),
@@ -91,7 +95,9 @@ export function installDebug(
       patch((s) => {
         s.level = level;
         s.xp = xpForLevel(level);
-        while (s.orders.length < orderSlotsForLevel(level)) s.orders.push({ order: null, readyAt: 0 });
+        const slots = orderSlotsForLevel(level);
+        s.orders.length = Math.min(s.orders.length, slots);
+        while (s.orders.length < slots) s.orders.push({ order: null, readyAt: 0 });
       }),
     grant: (items) =>
       patch((s) => {

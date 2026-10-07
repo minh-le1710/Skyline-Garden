@@ -7,17 +7,23 @@ import {
   MACHINE_UPGRADES,
   machineUpgradeGold,
 } from './config/machines';
+import { FORGES, FORGE_LIST, forgeXp } from './config/forge';
+import { isBarnItem } from './config/items';
+import { POT_BAG_MAX } from './config/pots';
 import { commit, fail } from './commit';
 import { isGoodId, isInt, isMachineId } from './ids';
+import { rollForgedPot } from './pots';
 import { addXp } from './progression';
-import { addCount, getSlot, hasItems, removeItems, storageUsed } from './state';
+import { withRng } from './rng';
+import { addCount, getSlot, hasItems, newPotInstance, removeItems, storageUsed } from './state';
 import type {
   ActionResult,
-  BarnItemId,
   Counts,
+  ForgeId,
   GameEvent,
   GameState,
   GoodId,
+  ItemId,
   Machine,
   MachineId,
   RecipeId,
@@ -29,10 +35,14 @@ export interface RecipeDef {
   id: RecipeId;
   machine: MachineId;
   unlockLevel: number;
-  inputs: Counts<BarnItemId>;
+  inputs: Counts<ItemId>;
   gold: number;
   minutes: number;
+  /** Ra hàng chế biến hay ra chậu (lò đúc). */
+  output: 'good' | 'pot';
 }
+
+export const isForgeId = (id: unknown): id is ForgeId => typeof id === 'string' && Object.hasOwn(FORGES, id);
 
 export function recipeDef(recipe: RecipeId): RecipeDef | null {
   if (isGoodId(recipe)) {
@@ -44,6 +54,19 @@ export function recipeDef(recipe: RecipeId): RecipeDef | null {
       inputs: g.inputs,
       gold: 0,
       minutes: g.minutes,
+      output: 'good',
+    };
+  }
+  if (isForgeId(recipe)) {
+    const f = FORGES[recipe];
+    return {
+      id: recipe,
+      machine: 'kiln',
+      unlockLevel: f.unlockLevel,
+      inputs: f.materials,
+      gold: f.gold,
+      minutes: f.minutes,
+      output: 'pot',
     };
   }
   return null;
@@ -51,7 +74,13 @@ export function recipeDef(recipe: RecipeId): RecipeDef | null {
 
 /** Các công thức của một loại máy, theo thứ tự mở khóa. */
 export const recipesFor = (machineId: MachineId): RecipeId[] =>
-  GOOD_LIST.filter((g) => g.machine === machineId).map((g) => g.id);
+  machineId === 'kiln'
+    ? FORGE_LIST.map((f) => f.id)
+    : GOOD_LIST.filter((g) => g.machine === machineId).map((g) => g.id);
+
+/** Số món chiếm chỗ trong kho của một bộ nguyên liệu. */
+const barnCount = (items: Counts<ItemId>): number =>
+  Object.entries(items).reduce((sum, [id, n]) => sum + (isBarnItem(id as ItemId) ? (n ?? 0) : 0), 0);
 
 // ---------- Trạng thái máy ----------
 
@@ -167,17 +196,27 @@ export function startJob(
   });
 }
 
-/** Số mẻ đầu hàng đợi đã xong và còn chỗ trong kho để lấy. */
-function collectableCount(state: GameState, m: Machine, now: number): { count: number; blocked: boolean } {
-  let free = state.storageCapacity - storageUsed(state);
+/** Số mẻ đầu hàng đợi đã xong và còn chỗ (kho hàng hoặc kho chậu) để lấy. */
+function collectableCount(
+  state: GameState,
+  m: Machine,
+  now: number,
+): { count: number; blocked: 'STORAGE_FULL' | 'POT_BAG_FULL' | null } {
+  let freeBarn = state.storageCapacity - storageUsed(state);
+  let freeBag = POT_BAG_MAX - state.potBag.length;
   let count = 0;
   for (const job of m.queue) {
     if (job.doneAt > now) break;
-    if (free < 1) return { count, blocked: true };
-    free--;
+    if (recipeDef(job.recipe)?.output === 'pot') {
+      if (freeBag < 1) return { count, blocked: 'POT_BAG_FULL' };
+      freeBag--;
+    } else {
+      if (freeBarn < 1) return { count, blocked: 'STORAGE_FULL' };
+      freeBarn--;
+    }
     count++;
   }
-  return { count, blocked: false };
+  return { count, blocked: null };
 }
 
 /** Lấy hàng trong bản nháp (đã kiểm tra có ít nhất một mẻ lấy được). */
@@ -191,15 +230,26 @@ export function collectInDraft(
   const target = draftMachine(s, floor, slot);
   const { count } = collectableCount(s, target, now);
   const items: Counts<GoodId> = {};
-  let xp = 0;
+  let goodsXp = 0;
+  let potsXp = 0;
   for (const job of target.queue.splice(0, count)) {
+    if (isForgeId(job.recipe)) {
+      const forge = FORGES[job.recipe as ForgeId];
+      const rolled = withRng(s, 'forge', (rng) => rollForgedPot(rng, forge.odds));
+      const pot = newPotInstance(s, rolled.potId, rolled.rarity, rolled.stats, 'forge');
+      s.potBag.push(pot);
+      const xp = forgeXp(forge.minutes);
+      events.push({ type: 'potForged', floor, slot, pot, xp });
+      potsXp += xp;
+      continue;
+    }
     const good = job.recipe as GoodId;
     items[good] = (items[good] ?? 0) + 1;
     addCount(s.items, good, 1);
-    xp += GOODS[good].xp;
+    goodsXp += GOODS[good].xp;
   }
-  events.push({ type: 'goodsCollected', floor, slot, items, xp });
-  addXp(s, xp, now, events);
+  if (Object.keys(items).length) events.push({ type: 'goodsCollected', floor, slot, items, xp: goodsXp });
+  addXp(s, goodsXp + potsXp, now, events);
 }
 
 /** Có lấy được hàng ở máy này lúc `now` không (và lý do nếu không). */
@@ -207,10 +257,10 @@ export function canCollect(
   state: GameState,
   m: Machine,
   now: number,
-): 'ok' | 'NOTHING_TO_COLLECT' | 'STORAGE_FULL' {
+): 'ok' | 'NOTHING_TO_COLLECT' | 'STORAGE_FULL' | 'POT_BAG_FULL' {
   const { count, blocked } = collectableCount(state, m, now);
   if (count > 0) return 'ok';
-  return blocked ? 'STORAGE_FULL' : 'NOTHING_TO_COLLECT';
+  return blocked ?? 'NOTHING_TO_COLLECT';
 }
 
 export function collectMachine(state: GameState, floor: number, slot: number, now: number): ActionResult {
@@ -258,8 +308,7 @@ export function cancelJob(
   if (!job) return fail('INVALID');
   if (job.startAt <= now) return fail('JOB_STARTED');
   const def = recipeDef(job.recipe)!;
-  const refund = Object.values(def.inputs).reduce<number>((a, b) => a + (b ?? 0), 0);
-  if (storageUsed(state) + refund > state.storageCapacity) return fail('STORAGE_FULL');
+  if (storageUsed(state) + barnCount(def.inputs) > state.storageCapacity) return fail('STORAGE_FULL');
   return commit(state, now, (s, events) => {
     const target = draftMachine(s, floor, slot);
     const [removed] = target.queue.splice(index, 1);
@@ -268,7 +317,7 @@ export function cancelJob(
       target.queue[i]!.startAt -= duration;
       target.queue[i]!.doneAt -= duration;
     }
-    for (const [id, qty] of Object.entries(def.inputs)) addCount(s.items, id as BarnItemId, qty ?? 0);
+    for (const [id, qty] of Object.entries(def.inputs)) addCount(s.items, id as ItemId, qty ?? 0);
     s.gold += def.gold;
     events.push({ type: 'jobCanceled', floor, slot, recipe: removed!.recipe });
   });

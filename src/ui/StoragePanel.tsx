@@ -4,6 +4,8 @@ import {
   ITEMS,
   MATERIAL_IDS,
   PLANT_IDS,
+  POT_RESALE_PCT,
+  SHOP_POTS,
   count,
   potStacks,
   storageUsed,
@@ -130,21 +132,55 @@ export function StoragePanel() {
           <p class="muted">{t('storage.noPots')}</p>
         ) : (
           <ul class="card-list">
-            {stacks.map((stack) => (
-              <li key={stack.key} class={`card rarity-border-${stack.sample.rarity}`}>
-                <span class="card-icon">
-                  <PotIcon potId={stack.sample.potId} rarity={stack.sample.rarity} />
-                </span>
-                <div class="card-body">
-                  <strong>
-                    {potName(stack.sample.potId)} × {stack.uids.length}
-                  </strong>
-                  <small>
-                    {rarityName(stack.sample.rarity)} · {potStatsText(stack.sample)}
-                  </small>
-                </div>
-              </li>
-            ))}
+            {stacks.map((stack, i) => {
+              const sample = stack.sample;
+              const shop = SHOP_POTS[sample.potId];
+              const sellable = (sample.origin === 'shop' || sample.origin === 'legacy') && shop;
+              const uid = stack.uids[0]!;
+              return (
+                <li
+                  key={stack.key}
+                  class={`card rarity-border-${sample.rarity}`}
+                  data-testid={`pot-card-${i}`}
+                >
+                  <span class="card-icon">
+                    <PotIcon potId={sample.potId} rarity={sample.rarity} />
+                  </span>
+                  <div class="card-body">
+                    <strong>
+                      {potName(sample.potId)} × {stack.uids.length}
+                    </strong>
+                    <small>
+                      {rarityName(sample.rarity)} · {potStatsText(sample)}
+                    </small>
+                  </div>
+                  <div class="card-actions">
+                    <button
+                      class="btn primary"
+                      onClick={() => {
+                        game.ui.tool.value = { kind: 'pot', stack: stack.key };
+                        game.ui.panel.value = null;
+                      }}
+                    >
+                      {t('pots.place')}
+                    </button>
+                    {sellable ? (
+                      <button class="btn" onClick={() => game.exec({ type: 'sellPot', uid })}>
+                        {t('pots.sell', { gold: Math.floor((shop.price * POT_RESALE_PCT) / 100) })}
+                      </button>
+                    ) : (
+                      <button
+                        class="btn"
+                        onClick={() => game.exec({ type: 'salvagePot', uid })}
+                        data-testid={`salvage-${i}`}
+                      >
+                        {t('pots.salvage')}
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ))}
     </Sheet>

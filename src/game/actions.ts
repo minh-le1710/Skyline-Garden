@@ -2,7 +2,8 @@ import { FLOOR_UNLOCKS, MAX_FLOORS, STORAGE_UPGRADES, speedUpCost } from './conf
 import { ITEMS } from './config/items';
 import { ORDER_DELIVER_COOLDOWN_MS, ORDER_DISCARD_COOLDOWN_MS } from './config/orders';
 import { PLANTS } from './config/plants';
-import { POT_BAG_MAX, SHOP_POTS } from './config/pots';
+import { SALVAGE } from './config/forge';
+import { POT_BAG_MAX, POT_RESALE_PCT, SHOP_POTS } from './config/pots';
 import { commit, fail } from './commit';
 import { isBarnItemId, isInt, isPlantId, isPositiveInt, isPotId } from './ids';
 import { canCollect, collectInDraft } from './machines';
@@ -26,7 +27,16 @@ import {
   removeItems,
   storageUsed,
 } from './state';
-import type { ActionResult, BarnItemId, GameEvent, GameState, Pot, PlantId, PotId } from './types';
+import type {
+  ActionResult,
+  BarnItemId,
+  ChestItemId,
+  GameEvent,
+  GameState,
+  Pot,
+  PlantId,
+  PotId,
+} from './types';
 
 // Các action của khu vườn (Mốc 1). Mỗi action: kiểm tra trên state cũ, rồi sửa trên bản sao qua commit().
 
@@ -68,6 +78,49 @@ export function buyPot(state: GameState, potId: PotId, qty: number, now: number)
     for (let i = 0; i < qty; i++)
       s.potBag.push(newPotInstance(s, potId, def.rarity, { ...def.stats }, 'shop'));
     events.push({ type: 'bought', item: 'pot', id: potId, qty, gold: cost });
+  });
+}
+
+/** Cất chậu trống từ ô vào kho chậu. */
+export function storePot(state: GameState, floor: number, slot: number, now: number): ActionResult {
+  const pot = potAt(state, floor, slot);
+  if (!isPot(pot)) return pot;
+  if (pot.plant) return fail('SLOT_BUSY');
+  if (state.potBag.length >= POT_BAG_MAX) return fail('POT_BAG_FULL');
+  return commit(state, now, (s, events) => {
+    const { kind: _kind, plant: _plant, ...instance } = draftPot(s, floor, slot);
+    s.floors[floor]!.slots[slot] = null;
+    s.potBag.push(instance);
+    events.push({ type: 'potStored', floor, slot, uid: instance.uid });
+  });
+}
+
+/** Bán lại chậu mua ở cửa hàng (hoặc chậu cũ) với 25% giá. Chậu đúc thì phân rã thay vì bán. */
+export function sellPot(state: GameState, uid: number, now: number): ActionResult {
+  const index = isInt(uid) ? state.potBag.findIndex((p) => p.uid === uid) : -1;
+  if (index < 0) return fail('POT_NOT_FOUND');
+  const pot = state.potBag[index]!;
+  const shop = SHOP_POTS[pot.potId];
+  if ((pot.origin !== 'shop' && pot.origin !== 'legacy') || !shop) return fail('CANNOT_SELL');
+  const gold = Math.floor((shop.price * POT_RESALE_PCT) / 100);
+  return commit(state, now, (s, events) => {
+    s.potBag.splice(index, 1);
+    s.gold += gold;
+    events.push({ type: 'potSold', uid, gold });
+  });
+}
+
+/** Phân rã chậu đúc/thưởng lấy lại vật liệu. */
+export function salvagePot(state: GameState, uid: number, now: number): ActionResult {
+  const index = isInt(uid) ? state.potBag.findIndex((p) => p.uid === uid) : -1;
+  if (index < 0) return fail('POT_NOT_FOUND');
+  const pot = state.potBag[index]!;
+  if (pot.origin !== 'forge' && pot.origin !== 'reward') return fail('CANNOT_SALVAGE');
+  const items = SALVAGE[pot.rarity];
+  return commit(state, now, (s, events) => {
+    s.potBag.splice(index, 1);
+    for (const [id, n] of Object.entries(items)) addCount(s.items, id as ChestItemId, n ?? 0);
+    events.push({ type: 'potSalvaged', uid, items });
   });
 }
 
@@ -181,7 +234,7 @@ export function sweep(state: GameState, floor: number, slot: number, now: number
   if (content === undefined) return fail('INVALID');
   if (content?.kind === 'machine') {
     const can = canCollect(state, content, now);
-    if (can !== 'ok') return fail(can === 'STORAGE_FULL' ? 'STORAGE_FULL' : 'NOTHING_TO_DO');
+    if (can !== 'ok') return fail(can === 'NOTHING_TO_COLLECT' ? 'NOTHING_TO_DO' : can);
     return commit(state, now, (s, events) => collectInDraft(s, floor, slot, now, events));
   }
   if (!content?.plant) return fail('NOTHING_TO_DO');

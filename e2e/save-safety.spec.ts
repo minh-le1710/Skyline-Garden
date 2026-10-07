@@ -46,3 +46,20 @@ test('mở game ở tab thứ hai thì tab cũ tạm dừng', { tag: '@smoke' },
   await expect(second.getByTestId('blocking-notice')).toBeHidden();
   await second.close();
 });
+
+test('tab chạy bản cũ (save mới hơn) không giành quyền của tab đang chơi', async ({ page, context }) => {
+  await openGame(page);
+  const stale = await context.newPage();
+  // Giả lập tab chạy bản cũ: đọc thấy save "mới hơn" (không ghi gì vào localStorage).
+  await stale.addInitScript(() => {
+    const original = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (key: string) {
+      return key === 'skyline-garden/save' ? JSON.stringify({ version: 999 }) : original.call(this, key);
+    };
+  });
+  await openGame(stale);
+  await expect(stale.getByTestId('blocking-notice')).toBeVisible();
+  await page.waitForTimeout(500);
+  await expect(page.getByTestId('blocking-notice')).toBeHidden();
+  await stale.close();
+});

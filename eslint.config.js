@@ -39,23 +39,16 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
+          // Chặn ở mọi độ sâu thư mục (src/game/config/* cũng không được import ra ngoài).
           patterns: [
-            'three',
-            'three/*',
-            'preact',
-            'preact/*',
-            '@preact/*',
-            'node:*',
-            '../render/*',
-            '../ui/*',
-            '../core/*',
-            '../input/*',
-            '../audio/*',
-            '../net/*',
-            '../social/*',
-            '../platform/*',
-            '../i18n',
-            '../i18n/*',
+            {
+              regex: '^(\\.\\./)+(render|ui|core|input|audio|net|social|platform|i18n|debug)(/|$)',
+              message: 'Logic game phải thuần: không import render/UI/core/i18n.',
+            },
+            {
+              group: ['three', 'three/*', 'preact', 'preact/*', '@preact/*', 'node:*'],
+              message: 'Logic game phải thuần: không import thư viện trình duyệt/Node.',
+            },
           ],
         },
       ],

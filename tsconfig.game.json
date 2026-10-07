@@ -3,7 +3,10 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "types": []
+    "types": [],
+    // Không kế thừa JSX của web: preact/jsx-runtime kéo lib.dom vào chương trình.
+    "jsx": null,
+    "jsxImportSource": null
   },
   "include": ["src/game"]
 }

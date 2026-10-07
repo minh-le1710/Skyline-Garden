@@ -4,7 +4,7 @@ import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
 import { MachinePanel } from './MachinePanel';
 import { OrdersPanel } from './OrdersPanel';
-import { FlyLayer, LevelUpModal, Toasts } from './Overlays';
+import { FlyLayer, ForgeReveal, LevelUpModal, Toasts } from './Overlays';
 import { PotInfo } from './PotInfo';
 import { ShopPanel } from './ShopPanel';
 import { StoragePanel } from './StoragePanel';
@@ -43,6 +43,7 @@ export function App({ game }: { game: Game }) {
       </div>
       <Panels />
       <LevelUpModal />
+      <ForgeReveal />
       <FlyLayer />
       <BlockingNotice />
     </GameContext.Provider>
