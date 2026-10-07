@@ -23,6 +23,8 @@ import { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES } from './config/machines';
 import { PESTS, PEST_STAY_MAX_MS, PEST_STAY_MIN_MS, PEST_UNLOCK_LEVEL } from './config/pests';
 import * as BALLOON from './config/balloon';
 import { ACHIEVEMENTS } from './config/achievements';
+import * as MINE from './config/mine';
+import * as TUTORIAL from './config/tutorial';
 import { cyrb53, stableStringify } from './hash';
 import { SAVE_VERSION } from './state';
 
@@ -35,6 +37,8 @@ export const RULES_VERSION = 1;
 /** Toàn bộ số liệu cân bằng game. Thêm config mới vào đây để hash phát hiện thay đổi. */
 const CONFIG = {
   achievements: ACHIEVEMENTS,
+  mine: { ...MINE, bandOf: undefined, tileXp: undefined },
+  tutorial: TUTORIAL,
   balloon: { ...BALLOON, crateCount: undefined },
   plants: PLANTS,
   goods: GOODS,

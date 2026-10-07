@@ -23,7 +23,7 @@ import {
   type SlotContent,
 } from './types';
 
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export function emptyFloor(): Floor {
   return { slots: Array.from({ length: SLOTS_PER_FLOOR }, () => null) };
@@ -81,6 +81,7 @@ export function createNewGame(now: number, seed: number): GameState {
     balloon: { phase: 'away', returnsAt: 0, trips: 0 },
     achievements: {},
     tutorial: { step: 'welcome', progress: 0 },
+    mine: null,
   };
 }
 

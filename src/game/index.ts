@@ -39,3 +39,5 @@ export * from './achievements';
 export * from './config/achievements';
 export * from './tutorial';
 export * from './config/tutorial';
+export * from './mine';
+export * from './config/mine';

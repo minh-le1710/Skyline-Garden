@@ -1,6 +1,7 @@
 import { MAX_FLOORS, SLOTS_PER_FLOOR, STORAGE_UPGRADES, storageCapacityAfter } from './config/garden';
 import { ACHIEVEMENTS } from './config/achievements';
 import { MAX_LEVEL } from './config/levels';
+import { MINE_COLS, MINE_ROWS, PICKAXES } from './config/mine';
 import { orderSlotsForLevel } from './config/orders';
 import { POT_BAG_MAX } from './config/pots';
 import {
@@ -23,6 +24,7 @@ import {
   PEST_IDS,
   POT_STATS,
   QUEST_KINDS,
+  MINE_TILE_KINDS,
   RNG_STREAMS,
   STAT_KEYS,
   type AchievementId,
@@ -153,6 +155,28 @@ export function checkStructure(s: GameState): string[] {
     'hướng dẫn: trạng thái không hợp lệ',
   );
 
+  const m = s.mine;
+  if (m !== null) {
+    const ok =
+      typeof m === 'object' &&
+      isInt(m.day) &&
+      isNonNegInt(m.energy) &&
+      Number.isFinite(m.energyAt) &&
+      isNonNegInt(m.refillsToday) &&
+      isNonNegInt(m.pickaxe) &&
+      Array.isArray(m.tiles) &&
+      m.tiles.length === MINE_COLS * MINE_ROWS &&
+      m.tiles.every(
+        (t) =>
+          typeof t === 'object' &&
+          t !== null &&
+          MINE_TILE_KINDS.includes(t.kind) &&
+          isNonNegInt(t.hp) &&
+          (t.loot === null || rewardProblems(t.loot) === null),
+      );
+    expect(ok, 'mỏ: trạng thái không hợp lệ');
+  }
+
   const b = s.balloon;
   expect(isNonNegInt(b?.trips), 'khinh khí cầu: số chuyến không hợp lệ');
   if (b?.phase === 'docked') {
@@ -216,6 +240,7 @@ export function checkBalance(s: GameState): string[] {
   for (const [id, n] of Object.entries(s.achievements) as [AchievementId, number][]) {
     expect(n <= ACHIEVEMENTS[id].tiers.length, `thành tựu ${id}: nhận ${n} bậc, vượt số bậc`);
   }
+  if (s.mine) expect(s.mine.pickaxe < PICKAXES.length, `bậc cuốc vượt tối đa: ${s.mine.pickaxe}`);
   return errors;
 }
 
@@ -238,6 +263,7 @@ export function normalizeLoaded(s: GameState, now: number): GameState {
   out.storageUpgrades = Math.min(out.storageUpgrades, STORAGE_UPGRADES.length);
   out.storageCapacity = storageCapacityAfter(out.storageUpgrades);
   while (out.orders.length < orderSlotsForLevel(out.level)) out.orders.push({ order: null, readyAt: now });
+  if (out.mine) out.mine.pickaxe = Math.min(out.mine.pickaxe, PICKAXES.length - 1);
   // Bảng thành tựu bớt bậc sau này: kẹp lại, không coi save là hỏng.
   for (const [id, n] of Object.entries(out.achievements) as [AchievementId, number][]) {
     out.achievements[id] = Math.min(n, ACHIEVEMENTS[id].tiers.length);

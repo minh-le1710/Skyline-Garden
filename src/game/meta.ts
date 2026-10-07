@@ -57,6 +57,16 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
       case 'potSold':
         add('goldEarned', e.gold);
         break;
+      case 'mineBroken':
+        add('tilesBroken', 1);
+        add('goldEarned', e.loot?.gold ?? 0);
+        break;
+      case 'mineChest':
+        add('mineClears', 1);
+        break;
+      case 'energyRefilled':
+        add('rubySpent', e.ruby);
+        break;
       case 'tutorialDone':
         if (!e.skipped) add('tutorialDone', 1);
         add('goldEarned', e.reward?.gold ?? 0);

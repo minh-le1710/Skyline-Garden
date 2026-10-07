@@ -151,6 +151,32 @@ export interface TutorialState {
   progress: number;
 }
 
+// ---------- Mỏ Đá Mây ----------
+
+export const MINE_TILE_KINDS = ['soil', 'stone', 'granite', 'obsidian', 'chest'] as const;
+export type MineTileKind = (typeof MINE_TILE_KINDS)[number];
+
+export interface MineTile {
+  kind: MineTileKind;
+  /** Độ bền còn lại; 0 là đã vỡ. */
+  hp: number;
+  /** Đồ rơi, tung sẵn lúc tạo mỏ. */
+  loot: Reward | null;
+}
+
+export interface MineState {
+  /** Ngày (calendar.dayIndex) của lưới hiện tại; sang ngày mới thì mỏ làm mới. */
+  day: number;
+  /** MINE_COLS × MINE_ROWS ô, theo hàng; hàng 0 là mặt đất. */
+  tiles: MineTile[];
+  /** Năng lượng tại thời điểm energyAt (hồi dần theo thời gian). */
+  energy: number;
+  energyAt: number;
+  refillsToday: number;
+  /** Bậc cuốc (0 = cuốc gỗ). */
+  pickaxe: number;
+}
+
 /** Thành tựu. Thêm thành tựu mới không cần tăng version save (state lưu dạng map). */
 export const ACHIEVEMENT_IDS = [
   'green_thumb',
@@ -164,6 +190,8 @@ export const ACHIEVEMENT_IDS = [
   'balloonist',
   'dedicated',
   'first_steps',
+  'miner',
+  'deep_digger',
 ] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
@@ -338,6 +366,8 @@ export interface GameState {
   /** Số bậc đã nhận thưởng của mỗi thành tựu. */
   achievements: Counts<AchievementId>;
   tutorial: TutorialState;
+  /** null cho tới lần đầu vào mỏ. */
+  mine: MineState | null;
 }
 
 // ---------- Sự kiện và kết quả ----------
@@ -402,6 +432,14 @@ export type GameEvent =
   | { type: 'achievementUnlocked'; id: AchievementId; tier: number }
   | { type: 'achievementClaimed'; id: AchievementId; tier: number; reward: Reward }
   | { type: 'tutorialStep'; step: TutorialStep }
+  | { type: 'mineOpened'; day: number; fresh: boolean }
+  | { type: 'mineHit'; x: number; y: number; hp: number; kind: MineTileKind }
+  | { type: 'mineBroken'; x: number; y: number; kind: MineTileKind; loot: Reward | null; xp: number }
+  | { type: 'mineChest'; reward: Reward }
+  | { type: 'mineBomb'; x: number; y: number; broken: number }
+  | { type: 'energyRefilled'; ruby: number; energy: number }
+  | { type: 'snackEaten'; id: GoodId; energy: number }
+  | { type: 'pickaxeUpgraded'; tier: number }
   /** Xong hướng dẫn. Bỏ qua thì không có thưởng. */
   | { type: 'tutorialDone'; skipped: boolean; reward: Reward | null };
 
@@ -443,6 +481,13 @@ export const ACTION_ERRORS = [
   'CRATE_FILLED',
   'NOT_ACHIEVED',
   'WRONG_STEP',
+  'NO_ENERGY',
+  'MINE_EXPIRED',
+  'TILE_UNREACHABLE',
+  'TILE_BROKEN',
+  'NO_BOMB',
+  'MAX_TIER',
+  'NOT_A_SNACK',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

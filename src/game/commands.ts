@@ -20,6 +20,7 @@ import { claimAchievement } from './achievements';
 import {
   isAchievementId,
   isBarnItemId,
+  isGoodId,
   isMachineId,
   isNonNegInt,
   isPlantId,
@@ -28,6 +29,7 @@ import {
   isTutorialStep,
 } from './ids';
 import { advanceTutorial, skipTutorial } from './tutorial';
+import { digTile, eatSnack, openMine, refillEnergy, upgradePickaxe, useBomb } from './mine';
 import { recipeDef } from './machines';
 import {
   buildMachine,
@@ -46,6 +48,7 @@ import type {
   ActionResult,
   BarnItemId,
   GameState,
+  GoodId,
   MachineId,
   PlantId,
   PotId,
@@ -90,7 +93,13 @@ export type Command =
   | { type: 'sendBalloon' }
   | { type: 'claimAchievement'; id: AchievementId }
   | { type: 'advanceTutorial'; from: TutorialStep }
-  | { type: 'skipTutorial' };
+  | { type: 'skipTutorial' }
+  | { type: 'openMine' }
+  | { type: 'digTile'; x: number; y: number }
+  | { type: 'useBomb'; x: number; y: number }
+  | { type: 'refillEnergy' }
+  | { type: 'eatSnack'; id: GoodId }
+  | { type: 'upgradePickaxe' };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -170,6 +179,18 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return advanceTutorial(s, c.from, now);
     case 'skipTutorial':
       return skipTutorial(s, now);
+    case 'openMine':
+      return openMine(s, now);
+    case 'digTile':
+      return digTile(s, c.x, c.y, now);
+    case 'useBomb':
+      return useBomb(s, c.x, c.y, now);
+    case 'refillEnergy':
+      return refillEnergy(s, now);
+    case 'eatSnack':
+      return eatSnack(s, c.id, now);
+    case 'upgradePickaxe':
+      return upgradePickaxe(s, now);
   }
 }
 
@@ -198,6 +219,7 @@ const FIELD = {
   machineId: isMachineId,
   achievementId: isAchievementId,
   tutorialStep: isTutorialStep,
+  good: isGoodId,
   recipe: (v: unknown) => typeof v === 'string' && recipeDef(v as RecipeId) !== null,
 } satisfies Record<string, FieldCheck>;
 
@@ -235,6 +257,12 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   claimAchievement: { id: FIELD.achievementId },
   advanceTutorial: { from: FIELD.tutorialStep },
   skipTutorial: {},
+  openMine: {},
+  digTile: { x: FIELD.index, y: FIELD.index },
+  useBomb: { x: FIELD.index, y: FIELD.index },
+  refillEnergy: {},
+  eatSnack: { id: FIELD.good },
+  upgradePickaxe: {},
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

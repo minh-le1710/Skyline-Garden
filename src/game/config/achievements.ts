@@ -91,6 +91,22 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
     stat: 'tutorialDone',
     tiers: [{ goal: 1, reward: { ruby: 2 } }],
   },
+  miner: {
+    stat: 'tilesBroken',
+    tiers: [
+      { goal: 100, reward: { items: { cloudBomb: 2 } } },
+      { goal: 1000, reward: { ruby: 5 } },
+      { goal: 5000, reward: { ruby: 15 } },
+    ],
+  },
+  deep_digger: {
+    stat: 'mineClears',
+    tiers: [
+      { goal: 1, reward: { ruby: 3 } },
+      { goal: 10, reward: { ruby: 8 } },
+      { goal: 50, reward: { ruby: 20 } },
+    ],
+  },
   dedicated: {
     stat: 'questsCompleted',
     tiers: [

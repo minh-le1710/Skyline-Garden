@@ -139,12 +139,19 @@ function v5to6(raw: Raw): Raw {
   return { ...raw, tutorial: { step: played ? 'done' : 'welcome', progress: 0 } };
 }
 
+// ---------- v6 → v7: Mỏ Đá Mây ----------
+
+function v6to7(raw: Raw): Raw {
+  return { ...raw, mine: null };
+}
+
 export const MIGRATIONS: Record<number, (raw: RawSave) => RawSave> = {
   1: v1to2,
   2: v2to3,
   3: v3to4,
   4: v4to5,
   5: v5to6,
+  6: v6to7,
 };
 
 /** Nâng `raw` lên `target`. Trả về null nếu thiếu migration. */
