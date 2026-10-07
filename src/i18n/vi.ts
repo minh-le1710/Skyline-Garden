@@ -91,6 +91,14 @@ export const vi = {
   'time.hours': '{n} giờ',
   'time.hoursMinutes': '{h} giờ {m} phút',
 
+  'blocked.otherTab.title': 'Game đang mở ở tab khác',
+  'blocked.otherTab.body': 'Để không ghi đè tiến độ, mỗi lúc chỉ chơi được ở một tab.',
+  'blocked.otherTab.action': 'Chơi ở tab này',
+  'blocked.tooNew.title': 'Đã có phiên bản mới',
+  'blocked.tooNew.body': 'Khu vườn của bạn được lưu bởi bản game mới hơn. Tải lại để cập nhật.',
+  'blocked.tooNew.action': 'Tải lại',
+  'toast.saveRecovered': 'Không đọc được dữ liệu cũ nên khu vườn bắt đầu lại. Bản lỗi đã được giữ lại.',
+
   'common.close': 'Đóng',
   'common.cancel': 'Hủy',
   'common.gold': 'vàng',

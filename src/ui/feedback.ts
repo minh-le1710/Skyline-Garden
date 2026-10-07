@@ -66,6 +66,9 @@ export function connectFeedback(
       case 'actionFailed':
         showToast(t(`error.${event.error}` as const), 'error');
         break;
+      case 'saveRecovered':
+        showToast(t('toast.saveRecovered'), 'error');
+        break;
       case 'welcomeBack':
         showToast(t('toast.welcomeBack', { n: event.readyWhileAway }), 'success');
         break;

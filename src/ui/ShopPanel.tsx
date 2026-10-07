@@ -1,13 +1,4 @@
-import {
-  PLANT_LIST,
-  POT_LIST,
-  STORAGE_UPGRADE_STEP,
-  buyPot,
-  buySeed,
-  count,
-  storageUpgradeCost,
-  upgradeStorage,
-} from '../game';
+import { PLANT_LIST, POT_LIST, STORAGE_UPGRADE_STEP, count, storageUpgradeCost } from '../game';
 import { formatNumber, t } from '../i18n';
 import type { ShopTab } from '../core/Game';
 import { useGame } from './context';
@@ -61,7 +52,7 @@ export function ShopPanel() {
                         key={qty}
                         class="btn gold"
                         disabled={state.gold < p.seedPrice * qty}
-                        onClick={() => game.run((s) => buySeed(s, p.id, qty))}
+                        onClick={() => game.exec({ type: 'buySeed', plantId: p.id, qty })}
                         data-testid={`buy-seed-${p.id}-${qty}`}
                       >
                         {t('shop.buy')} {qty}
@@ -98,7 +89,7 @@ export function ShopPanel() {
                   <button
                     class="btn gold"
                     disabled={state.gold < p.price}
-                    onClick={() => game.run((s) => buyPot(s, p.id))}
+                    onClick={() => game.exec({ type: 'buyPot', potId: p.id, qty: 1 })}
                     data-testid={`buy-pot-${p.id}`}
                   >
                     {t('shop.buy')}
@@ -129,7 +120,7 @@ export function ShopPanel() {
             <button
               class="btn gold"
               disabled={state.gold < storageUpgradeCost(state.storageUpgrades)}
-              onClick={() => game.run(upgradeStorage)}
+              onClick={() => game.exec({ type: 'upgradeStorage' })}
             >
               {t('shop.buy')}
               <small>

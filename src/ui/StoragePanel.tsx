@@ -1,4 +1,4 @@
-import { PLANTS, PLANT_IDS, POT_IDS, count, sellCrop, storageUsed } from '../game';
+import { PLANTS, PLANT_IDS, POT_IDS, count, storageUsed } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 import { GOLD, PLANT_ICON, PotIcon } from './icons';
@@ -44,12 +44,12 @@ export function StoragePanel() {
                   </small>
                 </div>
                 <div class="card-actions">
-                  <button class="btn" onClick={() => game.run((s) => sellCrop(s, id, 1))}>
+                  <button class="btn" onClick={() => game.exec({ type: 'sellCrop', plantId: id, qty: 1 })}>
                     {t('storage.sell')}
                   </button>
                   <button
                     class="btn gold"
-                    onClick={() => game.run((s) => sellCrop(s, id, n))}
+                    onClick={() => game.exec({ type: 'sellCrop', plantId: id, qty: n })}
                     data-testid={`sell-all-${id}`}
                   >
                     {t('storage.sellAll')}

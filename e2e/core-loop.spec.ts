@@ -1,59 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
-import type { GameState } from '../src/game';
-
-const state = (page: Page): Promise<GameState> => page.evaluate(() => window.__skyline!.state());
-
-async function openGame(page: Page): Promise<void> {
-  await page.goto('/?debug');
-  await page.waitForFunction(() => window.__skyline?.ready === true);
-}
-
-/**
- * Vị trí ô trên màn hình, chờ camera trượt xong: camera dịch theo kích thước UI (đo sau một khung hình)
- * và có quán tính, nên đợi vài khung hình liên tiếp mà vị trí không đổi.
- */
-async function slotPosition(page: Page, floor: number, slot: number): Promise<{ x: number; y: number }> {
-  return page.evaluate(
-    async ([f, s]) => {
-      const frames = (n: number) =>
-        new Promise<void>((resolve) => {
-          const step = () => (n-- <= 0 ? resolve() : requestAnimationFrame(step));
-          step();
-        });
-      let prev = window.__skyline!.slotScreenPosition(f!, s!);
-      for (let i = 0; i < 60; i++) {
-        await frames(3);
-        const pos = window.__skyline!.slotScreenPosition(f!, s!);
-        if (Math.abs(pos.x - prev.x) < 0.5 && Math.abs(pos.y - prev.y) < 0.5) return pos;
-        prev = pos;
-      }
-      return prev;
-    },
-    [floor, slot],
-  );
-}
-
-/** Nhấn vào ô đầu tiên rồi kéo qua lần lượt các ô (thao tác chính của game). */
-async function dragAcross(page: Page, floor: number, slots: number[]): Promise<void> {
-  const points = [];
-  for (const slot of slots) points.push(await slotPosition(page, floor, slot));
-  await page.mouse.move(points[0]!.x, points[0]!.y);
-  await page.mouse.down();
-  for (const p of points) await page.mouse.move(p.x, p.y, { steps: 6 });
-  await page.mouse.up();
-}
-
-async function dismissLevelUp(page: Page): Promise<void> {
-  const modal = page.getByTestId('levelup');
-  if (await modal.isVisible()) await modal.getByRole('button').click();
-}
+import { dismissLevelUp, dragAcross, expect, openGame, slotPosition, state, test } from './helpers';
 
 test(
   'vòng chơi chính: mua hạt, trồng, thu hoạch, giao đơn, bán, lưu game',
   { tag: '@smoke' },
   async ({ page }, testInfo) => {
-    const errors: string[] = [];
-    page.on('pageerror', (e) => errors.push(e.message));
     await openGame(page);
 
     // Mua 5 hạt hoa hồng.
@@ -120,7 +70,6 @@ test(
     expect(reloaded.gold).toBe(s.gold);
     expect(reloaded.seeds).toEqual(s.seeds);
     expect(reloaded.xp).toBe(s.xp);
-    expect(errors).toEqual([]);
   },
 );
 

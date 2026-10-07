@@ -1,4 +1,4 @@
-import { nextFloorUnlock, unlockFloor } from '../game';
+import { nextFloorUnlock } from '../game';
 import { formatNumber, t } from '../i18n';
 import { useGame } from './context';
 import { GOLD } from './icons';
@@ -27,7 +27,7 @@ export function UnlockDialog() {
           class="btn primary"
           disabled={!levelOk || !goldOk}
           onClick={() => {
-            if (game.run(unlockFloor).ok) close();
+            if (game.exec({ type: 'unlockFloor' }).ok) close();
           }}
           data-testid="unlock-confirm"
         >

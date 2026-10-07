@@ -331,6 +331,8 @@ export class GardenView {
   }
 
   private onEvent(event: AppEvent): void {
+    // State bị thay toàn bộ: lần đồng bộ tới dựng lại mà không chạy hiệu ứng "nảy".
+    if (event.type === 'stateReplaced') this.synced = false;
     if (event.type === 'harvested') {
       const origin = this.slotWorldPosition(event.floor, event.slot).add(new Vector3(0, 0.5, 0));
       this.burst(origin, PARTICLE_COLORS[event.plantId]);

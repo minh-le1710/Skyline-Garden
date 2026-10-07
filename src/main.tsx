@@ -1,6 +1,7 @@
 import { render } from 'preact';
 import './styles.css';
 import { Game } from './core/Game';
+import { holdTabLock } from './core/tabLock';
 import { installDebug, type DebugApi } from './debug';
 import { t } from './i18n';
 import { CameraScroller, type ScreenInsets } from './input/CameraScroller';
@@ -73,6 +74,7 @@ function boot(): void {
   let debug: DebugApi | null = null;
   if (new URLSearchParams(location.search).has('debug')) debug = installDebug(game, scene, garden, scroller);
 
+  holdTabLock(() => game.block('otherTab'));
   game.start();
 
   let last = performance.now();

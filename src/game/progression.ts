@@ -18,6 +18,13 @@ export function addXp(state: GameState, amount: number, now: number, events: Gam
   while (state.orders.length < slots) state.orders.push({ order: null, readyAt: now });
 }
 
+/** Cấp tương ứng với tổng XP. */
+export function levelForXp(xp: number): number {
+  let level = 1;
+  while (level < MAX_LEVEL && xp >= xpForLevel(level + 1)) level++;
+  return level;
+}
+
 /** Tiến độ trong cấp hiện tại, 0..1. */
 export function levelProgress(state: GameState): { current: number; needed: number; ratio: number } {
   if (state.level >= MAX_LEVEL) return { current: 0, needed: 0, ratio: 1 };

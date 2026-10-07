@@ -1,4 +1,5 @@
 import type { Game } from '../core/Game';
+import { BlockingNotice } from './BlockingNotice';
 import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
 import { OrdersPanel } from './OrdersPanel';
@@ -40,6 +41,7 @@ export function App({ game }: { game: Game }) {
       <Panels />
       <LevelUpModal />
       <FlyLayer />
+      <BlockingNotice />
     </GameContext.Provider>
   );
 }

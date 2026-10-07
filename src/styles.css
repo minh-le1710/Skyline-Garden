@@ -890,3 +890,9 @@ h3 {
     transition: none !important;
   }
 }
+
+.blocking {
+  z-index: 10;
+  background: rgba(30, 50, 90, 0.55);
+  backdrop-filter: blur(3px);
+}

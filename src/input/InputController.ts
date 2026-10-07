@@ -1,13 +1,4 @@
-import {
-  POT_IDS,
-  count,
-  harvest,
-  isReady,
-  placePot,
-  plant,
-  type ActionError,
-  type ActionResult,
-} from '../game';
+import { POT_IDS, count, isReady, type ActionError, type ActionResult } from '../game';
 import type { Game, Tool } from '../core/Game';
 import type { CameraScroller } from './CameraScroller';
 import type { PickTarget, Picker } from './Picker';
@@ -133,11 +124,11 @@ export class InputController {
     const quiet = dragging ? [...DRAG_QUIET, ...this.reported] : [...this.reported];
     let result: ActionResult;
     if (tool.kind === 'seed') {
-      result = this.game.run((s, now) => plant(s, floor, slot, tool.plantId, now), { quiet });
+      result = this.game.exec({ type: 'plant', floor, slot, plantId: tool.plantId }, { quiet });
     } else if (tool.kind === 'harvest') {
-      result = this.game.run((s, now) => harvest(s, floor, slot, now), { quiet });
+      result = this.game.exec({ type: 'harvest', floor, slot }, { quiet });
     } else {
-      result = this.game.run((s) => placePot(s, floor, slot, tool.potId), { quiet });
+      result = this.game.exec({ type: 'placePot', floor, slot, potId: tool.potId }, { quiet });
     }
     // Mỗi loại lỗi chỉ báo một lần trong một lần kéo.
     if (!result.ok) this.reported.add(result.error);
@@ -161,13 +152,13 @@ export class InputController {
       // Ô trống: đặt chậu có sẵn trong kho, nếu không có thì mở cửa hàng chậu.
       ui.selected.value = null;
       const potId = POT_IDS.find((id) => count(state.potStock, id) > 0);
-      if (potId) this.game.run((s) => placePot(s, floor, slot, potId));
+      if (potId) this.game.exec({ type: 'placePot', floor, slot, potId });
       else this.game.events.emit({ type: 'needPot' });
       return;
     }
     if (pot.plant && isReady(pot.plant, this.game.clock.now())) {
       ui.selected.value = null;
-      this.game.run((s, now) => harvest(s, floor, slot, now));
+      this.game.exec({ type: 'harvest', floor, slot });
       return;
     }
     const same = ui.selected.value?.floor === floor && ui.selected.value.slot === slot;

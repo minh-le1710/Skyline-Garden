@@ -1,4 +1,4 @@
-import { canFulfill, count, deliverOrder, discardOrder, formatDuration } from '../game';
+import { canFulfill, count, formatDuration } from '../game';
 import { formatNumber, t } from '../i18n';
 import { useGame } from './context';
 import { GOLD, PLANT_ICON, XP } from './icons';
@@ -52,7 +52,7 @@ export function OrdersPanel() {
                 <button
                   class="btn primary"
                   disabled={!ready}
-                  onClick={() => game.run((s, n) => deliverOrder(s, index, n))}
+                  onClick={() => game.exec({ type: 'deliverOrder', index })}
                   data-testid={`deliver-${index}`}
                 >
                   {t('orders.deliver')}
@@ -61,7 +61,7 @@ export function OrdersPanel() {
                   class="icon-btn"
                   title={t('orders.discard')}
                   aria-label={t('orders.discard')}
-                  onClick={() => game.run((s, n) => discardOrder(s, index, n))}
+                  onClick={() => game.exec({ type: 'discardOrder', index })}
                 >
                   🗑
                 </button>

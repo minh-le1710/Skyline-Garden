@@ -1,4 +1,4 @@
-import { formatDuration, growthProgress, harvest, isReady, remainingMs, speedUp, speedUpCost } from '../game';
+import { formatDuration, growthProgress, isReady, remainingMs, speedUpCost } from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 import { PLANT_ICON, PotIcon, RUBY } from './icons';
@@ -63,7 +63,7 @@ export function PotInfo() {
           class="btn primary"
           onClick={() => {
             close();
-            game.run((s, n) => harvest(s, floor, slot, n));
+            game.exec({ type: 'harvest', floor, slot });
           }}
         >
           {t('pot.info.harvest')}
@@ -72,7 +72,7 @@ export function PotInfo() {
         <button
           class="btn ruby"
           data-testid="speed-up"
-          onClick={() => game.run((s, n) => speedUp(s, floor, slot, n))}
+          onClick={() => game.exec({ type: 'speedUp', floor, slot })}
         >
           {t('pot.info.speedUp')} {speedUpCost(remaining)} {RUBY}
         </button>
