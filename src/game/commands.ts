@@ -27,6 +27,7 @@ import {
   swapSlots,
   upgradeMachine,
 } from './machines';
+import { claimLogin, claimQuest, claimQuestBonus, rerollQuest } from './daily';
 import { tick } from './tick';
 import type { ActionResult, BarnItemId, GameState, MachineId, PlantId, PotId, RecipeId } from './types';
 
@@ -58,7 +59,11 @@ export type Command =
   | { type: 'swapSlots'; floor: number; slot: number; toFloor: number; toSlot: number }
   | { type: 'storePot'; floor: number; slot: number }
   | { type: 'sellPot'; uid: number }
-  | { type: 'salvagePot'; uid: number };
+  | { type: 'salvagePot'; uid: number }
+  | { type: 'claimLogin' }
+  | { type: 'claimQuest'; index: number }
+  | { type: 'claimQuestBonus' }
+  | { type: 'rerollQuest'; index: number };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -120,6 +125,14 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return sellPot(s, c.uid, now);
     case 'salvagePot':
       return salvagePot(s, c.uid, now);
+    case 'claimLogin':
+      return claimLogin(s, now);
+    case 'claimQuest':
+      return claimQuest(s, c.index, now);
+    case 'claimQuestBonus':
+      return claimQuestBonus(s, now);
+    case 'rerollQuest':
+      return rerollQuest(s, c.index, now);
   }
 }
 
@@ -174,6 +187,10 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   storePot: { floor: FIELD.index, slot: FIELD.index },
   sellPot: { uid: FIELD.uid },
   salvagePot: { uid: FIELD.uid },
+  claimLogin: {},
+  claimQuest: { index: FIELD.index },
+  claimQuestBonus: {},
+  rerollQuest: { index: FIELD.index },
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

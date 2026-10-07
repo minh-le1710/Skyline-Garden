@@ -1,8 +1,8 @@
 import { signal } from '@preact/signals';
 import type { Game } from '../core/Game';
-import type { ItemId, PotInstance } from '../game';
+import type { ItemId, PotInstance, Reward } from '../game';
 import { t } from '../i18n';
-import { GOLD, ITEM_ICON, XP } from './icons';
+import { GOLD, ITEM_ICON, RUBY, XP } from './icons';
 import { machineName, plantName, potName } from './names';
 
 // Phản hồi cho người chơi: thông báo ngắn (toast), biểu tượng bay về HUD, hộp thoại lên cấp.
@@ -59,6 +59,15 @@ let lastPointer = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
 window.addEventListener('pointerdown', (e) => (lastPointer = { x: e.clientX, y: e.clientY }), {
   capture: true,
 });
+
+function flyReward(reward: Reward): void {
+  const from = lastPointer;
+  if (reward.gold) fly(GOLD, `+${reward.gold}`, from, 'gold');
+  if (reward.ruby) fly(RUBY, `+${reward.ruby}`, { x: from.x + 16, y: from.y }, 'ruby');
+  if (reward.xp) fly(XP, `+${reward.xp}`, { x: from.x, y: from.y - 20 }, 'xp');
+  for (const [id, n] of Object.entries(reward.items ?? {}))
+    fly(ITEM_ICON[id as ItemId], `+${n}`, from, 'storage');
+}
 
 export function connectFeedback(
   game: Game,
@@ -136,6 +145,14 @@ export function connectFeedback(
       case 'potSalvaged':
         for (const [id, n] of Object.entries(event.items))
           fly(ITEM_ICON[id as ItemId], `+${n}`, lastPointer, 'storage');
+        break;
+      case 'questCompleted':
+        showToast(t('toast.questCompleted'), 'success');
+        break;
+      case 'loginClaimed':
+      case 'questClaimed':
+      case 'questBonusClaimed':
+        flyReward(event.reward);
         break;
       case 'machineBuilt':
         showToast(t('toast.machineBuilt', { name: machineName(event.machineId) }), 'success');

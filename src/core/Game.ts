@@ -33,7 +33,7 @@ export type Tool =
   /** Di chuyển chậu/máy: chạm ô nguồn rồi ô đích. */
   | { kind: 'move'; from: SlotRef | null };
 
-export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock' | 'machine';
+export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests';
 export type ShopTab = 'seeds' | 'pots' | 'machines' | 'upgrades';
 export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';
 

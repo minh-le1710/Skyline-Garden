@@ -1,4 +1,5 @@
 import { commit } from './commit';
+import { dailyDue, runDaily } from './daily';
 import { dueOrderSlots, fillOrders } from './orders';
 import type { ActionResult, GameEvent, GameState } from './types';
 
@@ -13,6 +14,8 @@ interface TickSystem {
 }
 
 const SYSTEMS: TickSystem[] = [
+  // Sang ngày trước, để nhiệm vụ ngày mới sẵn sàng khi các hệ thống khác sinh sự kiện.
+  { name: 'daily', isDue: dailyDue, run: runDaily },
   { name: 'orders', isDue: (s, now) => dueOrderSlots(s, now).length > 0, run: fillOrders },
 ];
 

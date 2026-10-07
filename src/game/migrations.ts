@@ -108,8 +108,18 @@ function v1to2(raw: Raw): Raw {
   };
 }
 
+// ---------- v2 → v3: quà đăng nhập và nhiệm vụ ngày ----------
+
+function v2to3(raw: Raw): Raw {
+  return {
+    ...raw,
+    daily: { day: -1, quests: [], bonusClaimed: false, freeRerollUsed: false, loginDay: -1, loginCount: 0 },
+  };
+}
+
 export const MIGRATIONS: Record<number, (raw: RawSave) => RawSave> = {
   1: v1to2,
+  2: v2to3,
 };
 
 /** Nâng `raw` lên `target`. Trả về null nếu thiếu migration. */

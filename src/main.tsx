@@ -14,6 +14,8 @@ import { SkyBackground } from './render/SkyBackground';
 import { Tweens } from './render/tween';
 import { App } from './ui/App';
 import { connectFeedback } from './ui/feedback';
+import { loginModalOpen } from './ui/modals';
+import { loginClaimable } from './game';
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -77,6 +79,11 @@ function boot(): void {
   // Tab chạy bản cũ (save mới hơn) không bao giờ lưu nên không cần khóa, cũng không được giành khóa của tab đang chơi.
   if (game.blocked.value !== 'tooNew') holdTabLock(() => game.block('otherTab'));
   game.start();
+  // Quà đăng nhập tự mở một lần mỗi phiên. Ở chế độ debug (test) chỉ mở khi có `?modals`.
+  const params = new URLSearchParams(location.search);
+  if (loginClaimable(game.state.value, game.clock.now()) && (!params.has('debug') || params.has('modals'))) {
+    loginModalOpen.value = true;
+  }
 
   let last = performance.now();
   const frame = (time: number) => {

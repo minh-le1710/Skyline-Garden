@@ -1037,3 +1037,111 @@ h3 {
   height: 46px;
   animation: spin 6s linear infinite reverse;
 }
+
+.hud {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.hud-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.chip-bar {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 2px 4px;
+}
+
+.chip-bar:empty {
+  display: none;
+}
+
+.hud-chip {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 40px;
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 18px;
+  background: var(--panel);
+  border: 2px solid #fff;
+  box-shadow: var(--shadow);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.hud-chip small {
+  font-size: 12px;
+}
+
+.hud-chip .dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.hud-chip.pulse {
+  animation: bob 1.4s ease-in-out infinite;
+}
+
+.badge.small {
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  line-height: 16px;
+  font-size: 10px;
+}
+
+.login-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.login-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  border-radius: 10px;
+  background: #fff;
+  border: 2px solid var(--panel-edge);
+  font-size: 18px;
+}
+
+.login-day small {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
+.login-day.claimed {
+  opacity: 0.45;
+}
+
+.login-day.today {
+  border-color: var(--gold);
+  background: #fff8e1;
+}
+
+.reward-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-weight: 800;
+}

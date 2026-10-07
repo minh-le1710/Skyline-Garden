@@ -211,6 +211,52 @@ export interface OrderSlot {
   readyAt: number;
 }
 
+// ---------- Hằng ngày ----------
+
+export const QUEST_KINDS = [
+  'harvestAny',
+  'harvestPlant',
+  'deliverOrders',
+  'catchPests',
+  'collectGoods',
+  'makeGood',
+  'sellGold',
+  'fillCrates',
+  'forgePot',
+] as const;
+export type QuestKind = (typeof QUEST_KINDS)[number];
+
+/** Phần thưởng chỉ gồm vàng, ruby, XP, hạt giống và đồ trong rương (không bao giờ làm kho tràn). */
+export interface Reward {
+  gold?: number;
+  ruby?: number;
+  xp?: number;
+  seeds?: Counts<PlantId>;
+  items?: Counts<ChestItemId>;
+}
+
+export interface Quest {
+  kind: QuestKind;
+  /** Món cụ thể (với nhiệm vụ "thu hoạch X", "làm X"), null nếu không cần. */
+  target: BarnItemId | null;
+  goal: number;
+  progress: number;
+  claimed: boolean;
+  reward: Reward;
+}
+
+export interface DailyState {
+  /** Ngày (theo calendar.dayIndex) của bộ nhiệm vụ hiện tại; -1 là chưa có. */
+  day: number;
+  quests: Quest[];
+  bonusClaimed: boolean;
+  freeRerollUsed: boolean;
+  /** Ngày nhận quà đăng nhập gần nhất. */
+  loginDay: number;
+  /** Số lần đã nhận quà (vị trí trong vòng 7 ngày = loginCount % 7). */
+  loginCount: number;
+}
+
 // ---------- State ----------
 
 export interface GameState {
@@ -235,6 +281,7 @@ export interface GameState {
   nextOrderId: number;
   rng: Record<RngStream, number>;
   stats: Counts<StatKey>;
+  daily: DailyState;
 }
 
 // ---------- Sự kiện và kết quả ----------
@@ -284,7 +331,14 @@ export type GameEvent =
   | { type: 'potForged'; floor: number; slot: number; pot: PotInstance; xp: number }
   | { type: 'potStored'; floor: number; slot: number; uid: number }
   | { type: 'potSold'; uid: number; gold: number }
-  | { type: 'potSalvaged'; uid: number; items: Counts<ChestItemId> };
+  | { type: 'potSalvaged'; uid: number; items: Counts<ChestItemId> }
+  | { type: 'dailyReset'; day: number }
+  | { type: 'loginClaimed'; position: number; reward: Reward }
+  | { type: 'questCompleted'; index: number; kind: QuestKind }
+  | { type: 'questClaimed'; index: number; reward: Reward }
+  | { type: 'questBonusClaimed'; reward: Reward }
+  | { type: 'questRerolled'; index: number; ruby: number }
+  | { type: 'crateFilled'; index: number; id: BarnItemId; qty: number; gold: number; xp: number };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -317,6 +371,9 @@ export const ACTION_ERRORS = [
   'JOB_STARTED',
   'CANNOT_SELL',
   'CANNOT_SALVAGE',
+  'ALREADY_CLAIMED',
+  'QUEST_NOT_DONE',
+  'FEATURE_LOCKED',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

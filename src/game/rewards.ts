@@ -1,18 +1,8 @@
 import { addXp } from './progression';
 import { addCount } from './state';
-import type { ChestItemId, Counts, GameEvent, GameState, PlantId } from './types';
+import type { ChestItemId, Counts, GameEvent, GameState, PlantId, Reward } from './types';
 
-/**
- * Phần thưởng (quà đăng nhập, nhiệm vụ, sâu, khinh khí cầu…). Cố ý KHÔNG chứa nông sản/hàng hóa:
- * thưởng không bao giờ được làm kho vượt sức chứa.
- */
-export interface Reward {
-  gold?: number;
-  ruby?: number;
-  xp?: number;
-  seeds?: Counts<PlantId>;
-  items?: Counts<ChestItemId>;
-}
+export type { Reward } from './types';
 
 /** Cộng thưởng vào bản nháp. */
 export function grantReward(s: GameState, reward: Reward, now: number, events: GameEvent[]): void {

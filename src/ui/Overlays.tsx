@@ -1,7 +1,10 @@
 import { useLayoutEffect, useRef } from 'preact/hooks';
-import { unlocksAt } from '../game';
+import { LOGIN_GIFTS, loginReward, unlocksAt } from '../game';
 import { t } from '../i18n';
 import { flyers, forgeReveal, levelUp, removeFlyer, toasts, type Flyer } from './feedback';
+import { activeModal, loginModalOpen } from './modals';
+import { useGame } from './context';
+import { RewardChips } from './QuestsPanel';
 import { GOLD, ITEM_ICON, PotIcon, RUBY } from './icons';
 import { plantName, potName, potStatsText, rarityName } from './names';
 
@@ -58,7 +61,7 @@ export function FlyLayer() {
 
 export function LevelUpModal() {
   const info = levelUp.value;
-  if (!info) return null;
+  if (!info || activeModal.value !== 'levelUp') return null;
   const unlocked = unlocksAt(info.level);
   const hasNew = unlocked.plants.length + unlocked.pots.length + unlocked.floors.length > 0;
   const close = () => (levelUp.value = null);
@@ -109,7 +112,7 @@ export function LevelUpModal() {
 /** Màn mở chậu vừa đúc: hiệu ứng theo độ hiếm + chỉ số. */
 export function ForgeReveal() {
   const pot = forgeReveal.value;
-  if (!pot) return null;
+  if (!pot || activeModal.value !== 'forgeReveal') return null;
   const close = () => (forgeReveal.value = null);
   return (
     <div class="sheet-backdrop center" onClick={(e) => e.target === e.currentTarget && close()}>
@@ -124,6 +127,34 @@ export function ForgeReveal() {
         <p>{potStatsText(pot)}</p>
         <button class="btn primary big" onClick={close}>
           {t('forge.ok')}
+        </button>
+      </section>
+    </div>
+  );
+}
+
+/** Hộp quà đăng nhập, tự mở một lần mỗi phiên khi có quà. */
+export function LoginModal() {
+  const game = useGame();
+  if (activeModal.value !== 'login') return null;
+  const state = game.state.value;
+  const close = () => (loginModalOpen.value = false);
+  return (
+    <div class="sheet-backdrop center" onClick={(e) => e.target === e.currentTarget && close()}>
+      <section class="levelup" role="dialog" data-testid="login-modal">
+        <div class="levelup-star">🎁</div>
+        <h2>{t('login.title', { n: (state.daily.loginCount % LOGIN_GIFTS.length) + 1 })}</h2>
+        <p>
+          <RewardChips reward={loginReward(state)} />
+        </p>
+        <button
+          class="btn primary big"
+          onClick={() => {
+            game.exec({ type: 'claimLogin' });
+            close();
+          }}
+        >
+          {t('login.claim')}
         </button>
       </section>
     </div>

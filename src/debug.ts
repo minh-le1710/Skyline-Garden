@@ -33,6 +33,8 @@ export interface DebugApi {
   addGold(n: number): void;
   addRuby(n: number): void;
   setLevel(level: number): void;
+  /** Đánh dấu một nhiệm vụ ngày là đã xong (chưa nhận thưởng). */
+  completeQuest(index: number): void;
   /** Gắn một con sâu xuất hiện ngay trên cây ở ô (floor, slot). */
   spawnPest(floor: number, slot: number, id?: PestId): void;
   /** Tặng đồ trực tiếp (chỉ để dựng tình huống test). `pots` tạo chậu cửa hàng theo loại. */
@@ -111,6 +113,12 @@ export function installDebug(
             );
           }
         }
+      }),
+    completeQuest: (index) =>
+      patch((s) => {
+        const q = s.daily.quests[index];
+        if (!q) throw new Error(`Không có nhiệm vụ ${index}`);
+        q.progress = q.goal;
       }),
     spawnPest: (floor, slot, id = 'caterpillar') =>
       patch((s) => {

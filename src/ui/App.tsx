@@ -4,7 +4,8 @@ import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
 import { MachinePanel } from './MachinePanel';
 import { OrdersPanel } from './OrdersPanel';
-import { FlyLayer, ForgeReveal, LevelUpModal, Toasts } from './Overlays';
+import { FlyLayer, ForgeReveal, LevelUpModal, LoginModal, Toasts } from './Overlays';
+import { QuestsPanel } from './QuestsPanel';
 import { PotInfo } from './PotInfo';
 import { ShopPanel } from './ShopPanel';
 import { StoragePanel } from './StoragePanel';
@@ -25,6 +26,8 @@ function Panels() {
       return <UnlockDialog />;
     case 'machine':
       return <MachinePanel />;
+    case 'quests':
+      return <QuestsPanel />;
     default:
       return null;
   }
@@ -44,6 +47,7 @@ export function App({ game }: { game: Game }) {
       <Panels />
       <LevelUpModal />
       <ForgeReveal />
+      <LoginModal />
       <FlyLayer />
       <BlockingNotice />
     </GameContext.Provider>

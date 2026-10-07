@@ -17,6 +17,10 @@ import {
 } from './config/orders';
 import { PLANTS } from './config/plants';
 import { POT_BAG_MAX, POT_RESALE_PCT, POT_STAT_CAPS, SHOP_POTS } from './config/pots';
+import { LOGIN_GIFTS, QUEST_MATERIAL_CHANCE_PCT, QUEST_UNLOCK_LEVEL, REROLL_RUBY } from './config/daily';
+import { FORGES, RARITY_ROLLS, SALVAGE, STAT_WEIGHTS, TIME_STAT_FACTOR } from './config/forge';
+import { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES } from './config/machines';
+import { PESTS, PEST_STAY_MAX_MS, PEST_STAY_MIN_MS, PEST_UNLOCK_LEVEL } from './config/pests';
 import { cyrb53, stableStringify } from './hash';
 import { SAVE_VERSION } from './state';
 
@@ -30,6 +34,10 @@ export const RULES_VERSION = 1;
 const CONFIG = {
   plants: PLANTS,
   goods: GOODS,
+  machines: { MACHINES, MACHINE_LEVELS, MACHINE_UPGRADES },
+  forge: { FORGES, RARITY_ROLLS, SALVAGE, STAT_WEIGHTS, TIME_STAT_FACTOR },
+  pests: { PESTS, PEST_STAY_MAX_MS, PEST_STAY_MIN_MS, PEST_UNLOCK_LEVEL },
+  daily: { LOGIN_GIFTS, QUEST_MATERIAL_CHANCE_PCT, QUEST_UNLOCK_LEVEL, REROLL_RUBY },
   pots: { SHOP_POTS, POT_BAG_MAX, POT_STAT_CAPS, POT_RESALE_PCT },
   garden: { FLOOR_UNLOCKS, MAX_FLOORS, SLOTS_PER_FLOOR, START, START_STORAGE, STORAGE_UPGRADES },
   levels: { MAX_LEVEL, XP_TABLE },

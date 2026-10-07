@@ -1,3 +1,4 @@
+import { progressQuests } from './daily';
 import type { GameEvent, GameState, StatKey } from './types';
 
 /** Cộng thống kê trọn đời theo sự kiện của một lệnh. */
@@ -29,7 +30,16 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
         break;
       case 'speedUp':
       case 'machineSpeedUp':
+      case 'questRerolled':
         add('rubySpent', e.ruby);
+        break;
+      case 'loginClaimed':
+        add('loginDays', 1);
+        add('goldEarned', e.reward.gold ?? 0);
+        break;
+      case 'questClaimed':
+        add('questsCompleted', 1);
+        add('goldEarned', e.reward.gold ?? 0);
         break;
       case 'potForged':
         add('potsForged', 1);
@@ -53,4 +63,6 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
  */
 export function applyMeta(draft: GameState, events: GameEvent[], _now: number): void {
   recordStats(draft, events);
+  const completed = progressQuests(draft, events);
+  events.push(...completed);
 }
