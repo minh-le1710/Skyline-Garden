@@ -8,6 +8,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     trace: 'retain-on-failure',
+    // WebGL bằng phần mềm để chạy được trong môi trường không có GPU (CI, container).
+    launchOptions: { args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] },
   },
   projects: [
     { name: 'mobile', use: { ...devices['Pixel 7'], browserName: 'chromium' } },
