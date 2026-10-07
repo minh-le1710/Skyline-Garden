@@ -34,3 +34,28 @@ test('đúc chậu ở lò nung, mở chậu rồi đặt từ kho', async ({ pa
   const placed = (await state(page)).floors[1]!.slots[4]!;
   expect(placed.kind === 'pot' && placed.origin).toBe('forge');
 });
+
+test('lấy nhiều mẻ đúc cùng lúc thì mở lần lượt từng chậu', async ({ page }) => {
+  await openGame(page);
+  await page.evaluate(() => {
+    window.__skyline!.setLevel(8);
+    window.__skyline!.addGold(20_000);
+    window.__skyline!.grant({ items: { cloudclay: 16 } });
+  });
+  await dispatch(page, { type: 'buildMachine', machineId: 'kiln', floor: 1, slot: 3 });
+  for (let i = 0; i < 2; i++) {
+    expect(await dispatch(page, { type: 'startJob', floor: 1, slot: 3, recipe: 'forge_basic' })).toEqual({
+      ok: true,
+    });
+  }
+  await page.evaluate(() => window.__skyline!.skip(2 * 31 * 60));
+  expect(await dispatch(page, { type: 'collectMachine', floor: 1, slot: 3 })).toEqual({ ok: true });
+  expect((await state(page)).potBag).toHaveLength(2);
+
+  const ok = page.getByTestId('forge-reveal-ok');
+  await expect(ok).toContainText('1');
+  await ok.click();
+  await expect(page.getByTestId('forge-reveal')).toBeVisible();
+  await ok.click();
+  await expect(page.getByTestId('forge-reveal')).toBeHidden();
+});

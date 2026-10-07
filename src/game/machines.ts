@@ -131,10 +131,26 @@ export function* allMachines(state: GameState): Generator<MachineRef> {
 export const ownsMachine = (state: GameState, id: MachineId): boolean =>
   [...allMachines(state)].some((r) => r.machine.machineId === id);
 
-/** Hàng chế biến đang làm được (có máy và đã mở công thức): dùng cho đơn hàng, khinh khí cầu, nhiệm vụ. */
+/**
+ * Hàng chế biến đang làm được: có máy, đã mở công thức, và mọi nguyên liệu là hàng chế biến cũng làm được
+ * (vd. không có máy rang thì không làm được bánh chuối vì thiếu hạt rang). Dùng cho đơn hàng, khinh khí cầu, nhiệm vụ.
+ */
 export function producibleGoods(state: GameState): GoodId[] {
   const owned = new Set([...allMachines(state)].map((r) => r.machine.machineId));
-  return GOOD_LIST.filter((g) => owned.has(g.machine) && g.unlockLevel <= state.level).map((g) => g.id);
+  const candidates = GOOD_LIST.filter((g) => owned.has(g.machine) && g.unlockLevel <= state.level);
+  const ok = new Set<GoodId>();
+  // Lặp tới khi ổn định: không phụ thuộc thứ tự khai báo trong bảng hàng.
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const g of candidates) {
+      if (ok.has(g.id)) continue;
+      if (Object.keys(g.inputs).every((id) => !isGoodId(id) || ok.has(id))) {
+        ok.add(g.id);
+        changed = true;
+      }
+    }
+  }
+  return candidates.filter((g) => ok.has(g.id)).map((g) => g.id);
 }
 
 // ---------- Action ----------

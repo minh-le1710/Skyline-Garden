@@ -309,9 +309,12 @@ h3 {
 
 .tool-banner {
   position: absolute;
-  top: calc(56px + var(--safe-top));
-  left: 50%;
-  transform: translateX(-50%);
+  /* Ngay dưới HUD (main.tsx đo chiều cao HUD gồm cả hàng chip). */
+  top: calc(var(--hud-bottom, calc(100px + var(--safe-top))) + 6px);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -338,6 +341,7 @@ h3 {
 
 .pot-info {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -360,7 +364,8 @@ h3 {
 }
 
 .pot-info-body {
-  flex: 1;
+  /* Màn hẹp: chữ giữ tối thiểu 140px, các nút xuống dòng dưới. */
+  flex: 1 1 140px;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -369,6 +374,12 @@ h3 {
 
 .pot-info-body small {
   color: var(--ink-soft);
+}
+
+.pot-info-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
 }
 
 /* ---------- Nút ---------- */
@@ -748,7 +759,7 @@ h3 {
 
 .toasts {
   position: absolute;
-  top: calc(100px + var(--safe-top));
+  top: calc(var(--hud-bottom, calc(100px + var(--safe-top))) + 56px);
   left: 50%;
   transform: translateX(-50%);
   display: flex;

@@ -110,6 +110,8 @@ function boot(): void {
   // Khi mở khay hạt giống hay thẻ chậu, vùng dưới cao lên và camera trượt nhẹ để tầng dưới không bị che.
   const measure = () => {
     insets.top = document.querySelector('.hud')?.getBoundingClientRect().bottom ?? 0;
+    // Banner công cụ và thông báo nằm ngay dưới HUD, không che hàng chip.
+    document.documentElement.style.setProperty('--hud-bottom', `${insets.top}px`);
     const bottom = document.querySelector('.bottom')?.getBoundingClientRect();
     insets.bottom = bottom ? window.innerHeight - bottom.top : 0;
     scheduler.wake();

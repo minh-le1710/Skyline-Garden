@@ -111,9 +111,10 @@ export function LevelUpModal() {
 
 /** Màn mở chậu vừa đúc: hiệu ứng theo độ hiếm + chỉ số. */
 export function ForgeReveal() {
-  const pot = forgeReveal.value;
+  const pot = forgeReveal.value[0];
   if (!pot || activeModal.value !== 'forgeReveal') return null;
-  const close = () => (forgeReveal.value = null);
+  const close = () => (forgeReveal.value = forgeReveal.value.slice(1));
+  const remaining = forgeReveal.value.length - 1;
   return (
     <div class="sheet-backdrop center" onClick={(e) => e.target === e.currentTarget && close()}>
       <section class={`levelup forge-reveal rarity-${pot.rarity}`} role="dialog" data-testid="forge-reveal">
@@ -125,8 +126,8 @@ export function ForgeReveal() {
           <strong>{potName(pot.potId)}</strong> · {rarityName(pot.rarity)}
         </p>
         <p>{potStatsText(pot)}</p>
-        <button class="btn primary big" onClick={close}>
-          {t('forge.ok')}
+        <button class="btn primary big" onClick={close} data-testid="forge-reveal-ok">
+          {remaining > 0 ? t('forge.next', { n: remaining }) : t('forge.ok')}
         </button>
       </section>
     </div>

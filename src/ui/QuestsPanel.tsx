@@ -53,7 +53,9 @@ export function QuestsPanel() {
   const now = game.now.value;
   const { daily } = state;
   const loginReady = loginClaimable(state, now);
-  const position = daily.loginCount % LOGIN_GIFTS.length;
+  // Số ô đã nhận trong vòng 7 ngày. Hôm nay đã nhận ô thứ 7 thì cả vòng hiện là đã nhận tới hết ngày.
+  const days = LOGIN_GIFTS.length;
+  const filled = loginReady ? daily.loginCount % days : ((daily.loginCount - 1) % days) + 1;
   const allClaimed = daily.quests.length > 0 && daily.quests.every((q) => q.claimed);
 
   return (
@@ -61,14 +63,10 @@ export function QuestsPanel() {
       <h3>{t('quests.login')}</h3>
       <div class="login-strip">
         {LOGIN_GIFTS.map((gift, i) => {
-          // Các ô trước vị trí hiện tại trong vòng là đã nhận.
-          const claimed = i < position;
-          const isToday = i === position;
+          const claimed = i < filled;
+          const isToday = loginReady && i === filled;
           return (
-            <div
-              key={i}
-              class={`login-day ${claimed ? 'claimed' : ''} ${isToday && loginReady ? 'today' : ''}`}
-            >
+            <div key={i} class={`login-day ${claimed ? 'claimed' : ''} ${isToday ? 'today' : ''}`}>
               <small>{t('quests.loginDay', { n: i + 1 })}</small>
               <span>
                 {gift.ruby

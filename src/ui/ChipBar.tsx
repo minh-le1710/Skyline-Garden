@@ -18,47 +18,54 @@ export function ChipBar() {
   const claimable = quests.filter((q) => !q.claimed && q.progress >= q.goal).length;
   const done = quests.filter((q) => q.progress >= q.goal).length;
   const loginReady = loginClaimable(state, now);
+  const balloonMs =
+    state.balloon.phase === 'docked' ? state.balloon.leavesAt - now : state.balloon.returnsAt - now;
+  const questsLabel =
+    t('chip.questsStatus', { done, total: quests.length }) +
+    (claimable > 0 ? `, ${t('chip.claimable', { n: claimable })}` : '');
 
   return (
     <div class="chip-bar" role="toolbar">
       <button
         class={`hud-chip ${loginReady ? 'pulse' : ''}`}
-        aria-label={t('chip.login')}
+        aria-label={loginReady ? t('chip.loginReady') : t('chip.login')}
         title={t('chip.login')}
         onClick={() => openPanel('quests')}
         data-testid="chip-login"
       >
-        🎁{loginReady && <span class="dot" />}
+        <span aria-hidden="true">🎁</span>
+        {loginReady && <span class="dot" />}
       </button>
       {state.level >= QUEST_UNLOCK_LEVEL && (
         <button
           class="hud-chip"
-          aria-label={t('chip.quests')}
+          aria-label={questsLabel}
           title={t('chip.quests')}
           onClick={() => openPanel('quests')}
           data-testid="chip-quests"
         >
-          📋{' '}
-          <small>
+          <span aria-hidden="true">📋</span>{' '}
+          <small aria-hidden="true">
             {done}/{quests.length}
           </small>
-          {claimable > 0 && <span class="badge small">{claimable}</span>}
+          {claimable > 0 && (
+            <span class="badge small" aria-hidden="true">
+              {claimable}
+            </span>
+          )}
         </button>
       )}
       {state.level >= BALLOON_UNLOCK_LEVEL && (
         <button
           class={`hud-chip ${state.balloon.phase === 'away' ? 'dim' : ''}`}
-          aria-label={t('chip.balloon')}
+          aria-label={t(state.balloon.phase === 'docked' ? 'chip.balloonDocked' : 'chip.balloonAway', {
+            time: formatDuration(balloonMs),
+          })}
           title={t('chip.balloon')}
           onClick={() => openPanel('balloon')}
           data-testid="chip-balloon"
         >
-          🎈{' '}
-          <small>
-            {formatDuration(
-              state.balloon.phase === 'docked' ? state.balloon.leavesAt - now : state.balloon.returnsAt - now,
-            )}
-          </small>
+          <span aria-hidden="true">🎈</span> <small aria-hidden="true">{formatDuration(balloonMs)}</small>
         </button>
       )}
       <button
@@ -68,7 +75,7 @@ export function ChipBar() {
         onClick={() => openPanel('settings')}
         data-testid="chip-settings"
       >
-        ⚙️
+        <span aria-hidden="true">⚙️</span>
       </button>
     </div>
   );

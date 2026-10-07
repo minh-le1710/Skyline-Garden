@@ -46,6 +46,37 @@ describe('mua và đặt máy', () => {
   });
 });
 
+describe('hàng làm được', () => {
+  it('không tính hàng có nguyên liệu chế biến mà người chơi không làm được', () => {
+    const s = newGame();
+    s.level = 16;
+    s.gold = 100_000;
+    // Có nồi chưng và lò nướng nhưng không có máy rang (hạt rang là nguyên liệu bánh chuối).
+    let built = ok(buildMachine(s, 'still', 1, 2, T0));
+    built = ok(buildMachine(built, 'oven', 1, 3, T0));
+    const goods = producibleGoods(built);
+    expect(goods).not.toContain('banana_bread');
+    expect(goods).toContain('rose_water');
+    // Mua thêm máy rang thì làm được.
+    built = ok(buildMachine(built, 'roaster', 1, 4, T0));
+    expect(producibleGoods(built)).toContain('banana_bread');
+  });
+
+  it('mọi hàng được tính đều có đủ máy cho cả chuỗi nguyên liệu', () => {
+    const s = newGame();
+    s.level = 50;
+    s.gold = 1_000_000;
+    let built = s;
+    built = ok(buildMachine(built, 'atelier', 1, 2, T0));
+    built = ok(buildMachine(built, 'oven', 1, 3, T0));
+    for (const id of producibleGoods(built)) {
+      for (const input of Object.keys(GOODS[id].inputs)) {
+        if (input in GOODS) expect(producibleGoods(built)).toContain(input);
+      }
+    }
+  });
+});
+
 describe('làm hàng', () => {
   it('các mẻ chạy nối tiếp, trừ nguyên liệu lúc xếp hàng', () => {
     let s = withStill();

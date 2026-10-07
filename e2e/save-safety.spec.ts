@@ -66,6 +66,8 @@ test('tab chạy bản cũ (save mới hơn) không giành quyền của tab đa
 
 test('tab cũ lưu muộn lúc chuyển giao: tab giữ khóa nhận bản mới hơn, không tự dừng', async ({ page }) => {
   await openGame(page);
+  // Khóa được cấp bất đồng bộ: chờ tab này giữ khóa đã.
+  await page.waitForFunction(() => window.__skyline!.game.holdsLock);
   await page.evaluate(() => window.__skyline!.game.save());
   // Giả lập tab cũ chưa kịp biết mình mất khóa và ghi một bản save hợp lệ, mới hơn.
   await page.evaluate((key) => {

@@ -96,6 +96,7 @@ export const vi = {
 
   'forge.title': 'Chậu mới!',
   'forge.ok': 'Tuyệt!',
+  'forge.next': 'Mở chậu tiếp ({n} chiếc nữa)',
   'pots.place': 'Đặt',
   'pots.sell': 'Bán {gold}',
   'pots.salvage': 'Phân rã',
@@ -287,6 +288,11 @@ export const vi = {
   'settings.resetConfirm': 'Xóa toàn bộ tiến độ và bắt đầu khu vườn mới? Không thể hoàn tác.',
   'settings.version': 'Phiên bản {v}',
   'chip.settings': 'Cài đặt',
+  'chip.loginReady': 'Quà đăng nhập: có quà chờ nhận',
+  'chip.questsStatus': 'Nhiệm vụ ngày: xong {done}/{total}',
+  'chip.claimable': '{n} phần thưởng chờ nhận',
+  'chip.balloonDocked': 'Khinh khí cầu đang đậu, bay sau {time}',
+  'chip.balloonAway': 'Khinh khí cầu quay lại sau {time}',
 
   'common.close': 'Đóng',
   'common.cancel': 'Hủy',

@@ -4,6 +4,7 @@ import { orderSlotsForLevel } from './config/orders';
 import { POT_BAG_MAX } from './config/pots';
 import {
   isBarnItemId,
+  isInt,
   isItemId,
   isMachineId,
   isNonNegInt,
@@ -18,6 +19,7 @@ import { storageUsed } from './state';
 import {
   PEST_IDS,
   POT_STATS,
+  QUEST_KINDS,
   RNG_STREAMS,
   STAT_KEYS,
   type Counts,
@@ -116,6 +118,31 @@ export function checkStructure(s: GameState): string[] {
     });
   });
 
+  const d = s.daily;
+  if (typeof d !== 'object' || d === null || Array.isArray(d)) {
+    errors.push('daily không hợp lệ');
+  } else {
+    expect(isInt(d.day) && d.day >= -1 && isInt(d.loginDay) && d.loginDay >= -1, 'daily: ngày không hợp lệ');
+    expect(isNonNegInt(d.loginCount), 'daily: số lần nhận quà không hợp lệ');
+    expect(
+      typeof d.bonusClaimed === 'boolean' && typeof d.freeRerollUsed === 'boolean',
+      'daily: cờ không hợp lệ',
+    );
+    expect(Array.isArray(d.quests), 'daily: quests không phải mảng');
+    for (const q of Array.isArray(d.quests) ? d.quests : []) {
+      const ok =
+        typeof q === 'object' &&
+        q !== null &&
+        QUEST_KINDS.includes(q.kind) &&
+        isPositiveInt(q.goal) &&
+        isNonNegInt(q.progress) &&
+        typeof q.claimed === 'boolean' &&
+        (q.target === null || isBarnItemId(q.target)) &&
+        rewardProblems(q.reward) === null;
+      expect(ok, 'daily: nhiệm vụ không hợp lệ');
+    }
+  }
+
   const b = s.balloon;
   expect(isNonNegInt(b?.trips), 'khinh khí cầu: số chuyến không hợp lệ');
   if (b?.phase === 'docked') {
@@ -140,6 +167,23 @@ export function checkStructure(s: GameState): string[] {
     expect(isPositiveInt(order.gold) && isPositiveInt(order.xp), `thưởng đơn ${order.id} không hợp lệ`);
   }
   return errors;
+}
+
+/** Kiểm tra một phần thưởng lưu trong save (nhiệm vụ…). */
+function rewardProblems(r: unknown): string | null {
+  if (typeof r !== 'object' || r === null || Array.isArray(r)) return 'thưởng không phải object';
+  const reward = r as Record<string, unknown>;
+  for (const key of ['gold', 'ruby', 'xp'] as const) {
+    if (reward[key] !== undefined && !isNonNegInt(reward[key])) return `thưởng ${key} không hợp lệ`;
+  }
+  const counts = (v: unknown, valid: (id: unknown) => boolean) =>
+    v === undefined ||
+    (typeof v === 'object' &&
+      v !== null &&
+      Object.entries(v).every(([id, n]) => valid(id) && isPositiveInt(n)));
+  if (!counts(reward.seeds, isPlantId) || !counts(reward.items, isItemId))
+    return 'thưởng vật phẩm không hợp lệ';
+  return null;
 }
 
 /** Các điều kiện phụ thuộc số liệu cân bằng hiện tại (bảng XP, kho, bảng đơn…). */

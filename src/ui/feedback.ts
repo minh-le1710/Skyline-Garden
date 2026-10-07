@@ -24,7 +24,8 @@ export interface Flyer {
 export const toasts = signal<Toast[]>([]);
 export const flyers = signal<Flyer[]>([]);
 /** Chậu vừa đúc xong (hiện màn mở chậu). */
-export const forgeReveal = signal<PotInstance | null>(null);
+/** Hàng đợi chậu vừa đúc chờ mở (lấy nhiều mẻ một lúc thì mở lần lượt). */
+export const forgeReveal = signal<PotInstance[]>([]);
 
 /** Cấp vừa đạt được (hiện hộp thoại chúc mừng), null nếu không có. */
 export const levelUp = signal<{ level: number; gold: number; ruby: number } | null>(null);
@@ -137,7 +138,7 @@ export function connectFeedback(
         break;
       }
       case 'potForged':
-        forgeReveal.value = event.pot;
+        forgeReveal.value = [...forgeReveal.value, event.pot];
         break;
       case 'potSold':
         fly(GOLD, `+${event.gold}`, lastPointer, 'gold');

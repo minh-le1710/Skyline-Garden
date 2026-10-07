@@ -1,6 +1,7 @@
 import { checkStructure, normalizeLoaded } from './invariants';
 import { migrate } from './migrations';
 import { SAVE_VERSION } from './state';
+import { tick } from './tick';
 import type { GameState } from './types';
 
 export const SAVE_KEY = 'skyline-garden/save';
@@ -50,6 +51,8 @@ export function readSave(json: string | null): LoadResult {
     if (problems) return { status: 'corrupt', raw: json, reason: problems };
     const lastSeenAt = Number.isFinite(data.lastSeenAt) ? (data.lastSeenAt as number) : 0;
     const state = normalizeLoaded(data as unknown as GameState, lastSeenAt);
+    // Chạy thử một nhịp thời gian: save lọt qua kiểm tra mà vẫn làm game ném lỗi thì coi là hỏng, không làm sập game.
+    tick(state, lastSeenAt);
     return { status: 'ok', state, migratedFrom: version < SAVE_VERSION ? version : null };
   } catch (err) {
     return { status: 'corrupt', raw: json, reason: `lỗi khi đọc save v${version}: ${String(err)}` };
@@ -81,7 +84,7 @@ function shapeProblems(d: Record<string, unknown>): string | null {
   if (
     !Array.isArray(d.orders) ||
     !Array.isArray(d.potBag) ||
-    ![d.seeds, d.items, d.rng, d.stats].every(isRecord)
+    ![d.seeds, d.items, d.rng, d.stats, d.daily, d.balloon].every(isRecord)
   ) {
     return 'kho không hợp lệ';
   }

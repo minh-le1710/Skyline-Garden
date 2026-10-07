@@ -177,6 +177,10 @@ export class Game {
   /** Tab này đang giữ khóa chơi (Web Locks). */
   private lockHeld = false;
 
+  get holdsLock(): boolean {
+    return this.lockHeld;
+  }
+
   /**
    * Vừa giành được khóa: tab cũ có thể đã kịp lưu một lần trong lúc tab này đang tải.
    * Bản đó mới hơn bản tab này đọc lúc đầu, nên nhận lấy thay vì ghi đè hay tự dừng.

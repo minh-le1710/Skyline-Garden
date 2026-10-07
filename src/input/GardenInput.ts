@@ -12,6 +12,8 @@ const DRAG_QUIET: ActionError[] = [
   'SLOT_OCCUPIED',
   'NOT_A_POT',
   'NOTHING_TO_COLLECT',
+  // Kéo liềm qua chậu trống hay máy đang chạy.
+  'NOTHING_TO_DO',
 ];
 
 /**

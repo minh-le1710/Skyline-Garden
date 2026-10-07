@@ -38,28 +38,30 @@ export function PotInfo() {
           </small>
           <small>{t('pot.info.plantHint')}</small>
         </div>
-        <button
-          class="btn primary"
-          onClick={() => {
-            close();
-            game.ui.trayOpen.value = true;
-          }}
-        >
-          {t('pot.info.plant')}
-        </button>
-        <button
-          class="btn"
-          onClick={() => {
-            close();
-            game.exec({ type: 'storePot', floor, slot });
-          }}
-          data-testid="store-pot"
-        >
-          {t('pot.info.store')}
-        </button>
         <button class="icon-btn" onClick={close} aria-label={t('common.close')}>
           ✕
         </button>
+        <div class="pot-info-actions">
+          <button
+            class="btn"
+            onClick={() => {
+              close();
+              game.exec({ type: 'storePot', floor, slot });
+            }}
+            data-testid="store-pot"
+          >
+            {t('pot.info.store')}
+          </button>
+          <button
+            class="btn primary"
+            onClick={() => {
+              close();
+              game.ui.trayOpen.value = true;
+            }}
+          >
+            {t('pot.info.plant')}
+          </button>
+        </div>
       </div>
     );
   }

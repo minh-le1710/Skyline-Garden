@@ -98,6 +98,7 @@ export const en: Record<MessageKey, string> = {
 
   'forge.title': 'New pot!',
   'forge.ok': 'Awesome!',
+  'forge.next': 'Open next pot ({n} left)',
   'pots.place': 'Place',
   'pots.sell': 'Sell {gold}',
   'pots.salvage': 'Salvage',
@@ -290,6 +291,11 @@ export const en: Record<MessageKey, string> = {
   'settings.resetConfirm': 'Erase all progress and start a new garden? This cannot be undone.',
   'settings.version': 'Version {v}',
   'chip.settings': 'Settings',
+  'chip.loginReady': 'Login Gift: ready to claim',
+  'chip.questsStatus': 'Daily Quests: {done}/{total} done',
+  'chip.claimable': 'rewards to claim: {n}',
+  'chip.balloonDocked': 'Hot-air Balloon docked, leaves in {time}',
+  'chip.balloonAway': 'Hot-air Balloon returns in {time}',
 
   'common.close': 'Close',
   'common.cancel': 'Cancel',

@@ -12,7 +12,7 @@ export const loginModalOpen = signal(false);
 
 export const activeModal = computed<ModalId | null>(() => {
   if (levelUp.value) return 'levelUp';
-  if (forgeReveal.value) return 'forgeReveal';
+  if (forgeReveal.value.length) return 'forgeReveal';
   if (loginModalOpen.value) return 'login';
   return null;
 });

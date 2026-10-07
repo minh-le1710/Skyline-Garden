@@ -1,6 +1,6 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { RULES_HASH, SAVE_VERSION, checkInvariants, readSave, serialize, stateHash } from '../src/game';
+import { RULES_HASH, SAVE_VERSION, checkInvariants, readSave, serialize, stateHash, step } from '../src/game';
 import { midgame } from './fixtures';
 
 const DIR = 'tests/fixtures/saves';
@@ -116,6 +116,33 @@ describe('tải save an toàn', () => {
     if (r.status !== 'ok') return;
     expect(r.state.storageUpgrades).toBe(20);
     expect(checkInvariants(r.state)).toEqual([]);
+  });
+
+  it('daily hỏng (null, quests null, số…) là save hỏng chứ không làm sập nhịp tick đầu tiên', () => {
+    const base = JSON.parse(serialize(midgame()));
+    const variants = [
+      { ...base, daily: null },
+      { ...base, daily: 5 },
+      { ...base, daily: 'x' },
+      { ...base, daily: { ...base.daily, quests: null } },
+      { ...base, daily: { ...base.daily, quests: [{ kind: 'nope', goal: 1, progress: 0, claimed: false }] } },
+      { ...base, daily: { ...base.daily, quests: [{ ...base.daily.quests[0], reward: null }] } },
+      { ...base, daily: { ...base.daily, bonusClaimed: 'yes' } },
+      { ...base, balloon: null },
+    ];
+    for (const bad of variants) {
+      const r = readSave(JSON.stringify(bad));
+      expect(r.status).toBe('corrupt');
+    }
+  });
+
+  it('mọi save đọc được đều chạy được nhịp tick đầu tiên', () => {
+    for (const file of readdirSync(DIR)) {
+      const r = readSave(readFileSync(`${DIR}/${file}`, 'utf8'));
+      expect(r.status).toBe('ok');
+      if (r.status !== 'ok') continue;
+      expect(() => step(r.state, { type: 'tick' }, r.state.lastSeenAt + 86_400_000)).not.toThrow();
+    }
   });
 
   it('save cấp tối đa của v1 vẫn là cấp 50', () => {
