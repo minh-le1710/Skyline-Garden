@@ -1,6 +1,7 @@
 import { effect } from '@preact/signals-core';
 import { render } from 'preact';
 import './styles.css';
+import { connectAudio } from './audio/connectAudio';
 import { Game } from './core/Game';
 import { reduceMotion } from './core/motion';
 import { LOCALES, SettingsStore, defaultSettings, type Locale } from './core/settings';
@@ -66,12 +67,17 @@ function boot(): void {
   }
 
   const game = new Game(storage, settings);
+  // Chỉ gắn listener: AudioContext được tạo ở lần chạm/phím đầu tiên; trình duyệt không có Web Audio thì im lặng.
+  const audio = connectAudio(game);
   const scheduler = new FrameScheduler();
 
   // Phần màn hình bị HUD và thanh công cụ che, để camera không giấu tầng mây dưới UI.
   const insets: ScreenInsets = { top: 0, bottom: 0 };
   const gardenScreen = new GardenScreen(scene, game, () => insets);
-  const host = new ScreenHost(game, gardenScreen, {}, () => scheduler.invalidate());
+  const host = new ScreenHost(game, gardenScreen, {}, (screen) => {
+    scheduler.invalidate();
+    audio.setTheme(screen.id === 'mine' ? 'mine' : 'garden');
+  });
 
   effect(() => {
     const tier = TIERS[resolveTier(settings.value.value.quality, device)];
@@ -128,6 +134,7 @@ function boot(): void {
   if (params.has('debug')) {
     debug = installDebug(game, scene, gardenScreen.garden, gardenScreen.scroller, {
       frameStats: () => ({ rendered: scheduler.rendered, dpr: scene.pixelRatio }),
+      audio: audio.engine,
     });
   }
   const perf = params.has('debug') && params.has('perf') ? perfOverlay() : null;

@@ -35,3 +35,39 @@ describe('luật thuần của src/game', () => {
     ).toEqual([]);
   });
 });
+
+/** src/audio tách khỏi đồ họa; bộ soạn nhạc phải thuần như logic game. */
+describe('luật của src/audio', () => {
+  const eslint = new ESLint();
+  const lint = async (code: string, filePath: string) => {
+    const [result] = await eslint.lintText(code, { filePath });
+    return result!.messages.map((m) => m.ruleId);
+  };
+
+  it('chặn three và render', async () => {
+    expect(
+      await lint(`import { Vector3 } from 'three';\nexport const v = Vector3;\n`, 'src/audio/probe.ts'),
+    ).toContain('no-restricted-imports');
+    expect(
+      await lint(`import { x } from '../render/layout';\nexport const y = x;\n`, 'src/audio/probe.ts'),
+    ).toContain('no-restricted-imports');
+    expect(
+      await lint(
+        `import { x } from '../../render/layout';\nexport const y = x;\n`,
+        'src/audio/music/probe.ts',
+      ),
+    ).toContain('no-restricted-imports');
+    expect(
+      await lint(
+        `import { SFX_RECIPES } from './sfx';\nexport const r = SFX_RECIPES;\n`,
+        'src/audio/probe.ts',
+      ),
+    ).toEqual([]);
+  });
+
+  it('composer.ts không được dùng Math.random', async () => {
+    expect(await lint(`export const r = Math.random();\n`, 'src/audio/music/composer.ts')).toContain(
+      'no-restricted-properties',
+    );
+  });
+});

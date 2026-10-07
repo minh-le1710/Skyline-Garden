@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks';
 import { BACKUP_KEY, readSave, serialize } from '../game';
 import { LOCALES, type Locale, type Quality } from '../core/settings';
 import { t } from '../i18n';
+import { hasHaptics } from '../platform/haptics';
 import { useGame } from './context';
 import { showToast } from './feedback';
 import { ConfirmDialog, Sheet } from './Sheet';
@@ -100,14 +101,16 @@ export function SettingsPanel() {
         <span>{t('settings.mute')}</span>
         <input type="checkbox" checked={settings.muted} onChange={() => update({ muted: !settings.muted })} />
       </label>
-      <label class="setting-row">
-        <span>{t('settings.haptics')}</span>
-        <input
-          type="checkbox"
-          checked={settings.haptics}
-          onChange={() => update({ haptics: !settings.haptics })}
-        />
-      </label>
+      {hasHaptics() && (
+        <label class="setting-row">
+          <span>{t('settings.haptics')}</span>
+          <input
+            type="checkbox"
+            checked={settings.haptics}
+            onChange={() => update({ haptics: !settings.haptics })}
+          />
+        </label>
+      )}
 
       <h3>{t('settings.display')}</h3>
       <div class="setting-row">

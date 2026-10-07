@@ -1,3 +1,5 @@
+import type { AudioEngine } from './audio/AudioEngine';
+import type { SfxId } from './audio/sfx';
 import type { Game } from './core/Game';
 import {
   SHOP_POTS,
@@ -50,6 +52,11 @@ export interface DebugApi {
   renderInfo(): { calls: number; triangles: number };
   /** Số khung đã vẽ thật (FrameScheduler) và DPR hiện tại. */
   frameStats(): { rendered: number; dpr: number };
+  /**
+   * Âm thanh: `log` là các hiệu ứng được yêu cầu gần nhất (tối đa 50), ghi cả khi chưa mở khóa hay
+   * đang tắt tiếng; `state` là trạng thái AudioContext (null khi chưa tạo).
+   */
+  audio: { readonly log: readonly SfxId[]; readonly state: AudioContextState | null };
 }
 
 declare global {
@@ -64,7 +71,7 @@ export function installDebug(
   scene: SceneManager,
   garden: GardenView,
   scroller: CameraScroller,
-  extra: { frameStats: () => { rendered: number; dpr: number } },
+  extra: { frameStats: () => { rendered: number; dpr: number }; audio: AudioEngine },
 ): DebugApi {
   game.debugChecks = true;
   /** Sửa state trực tiếp. Từ chối (ném lỗi) nếu kết quả vi phạm bất biến, để không lưu một save "hỏng". */
@@ -149,6 +156,14 @@ export function installDebug(
       return { calls, triangles };
     },
     frameStats: extra.frameStats,
+    audio: {
+      get log() {
+        return extra.audio.log;
+      },
+      get state() {
+        return extra.audio.state;
+      },
+    },
   };
   window.__skyline = api;
   console.info('[Skyline Garden] Debug: window.__skyline');

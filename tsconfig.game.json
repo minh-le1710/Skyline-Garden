@@ -8,5 +8,6 @@
     "jsx": null,
     "jsxImportSource": null
   },
-  "include": ["src/game"]
+  // Bộ soạn nhạc cũng phải thuần (không Web Audio, không DOM).
+  "include": ["src/game", "src/audio/music/composer.ts", "src/audio/music/themes.ts"]
 }

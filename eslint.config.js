@@ -4,7 +4,13 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 /** Logic game và giao thức chạy cả ở trình duyệt lẫn server: phải thuần và tất định. */
-const PURE = ['src/game/**/*.ts', 'src/protocol/**/*.ts'];
+const PURE = [
+  'src/game/**/*.ts',
+  'src/protocol/**/*.ts',
+  // Soạn nhạc nền: thuần và tất định theo seed (unit test được), không Web Audio.
+  'src/audio/music/composer.ts',
+  'src/audio/music/themes.ts',
+];
 
 export default tseslint.config(
   {
@@ -33,6 +39,27 @@ export default tseslint.config(
   {
     files: ['*.config.{js,ts}', 'scripts/**', 'build/**', 'server/**', 'tests/**', 'e2e/**'],
     languageOptions: { globals: { ...globals.node } },
+  },
+  {
+    // Âm thanh tách khỏi đồ họa: chạy được cả khi không có WebGL, không kéo three vào chunk nhạc.
+    files: ['src/audio/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^(\\.\\./)+render(/|$)',
+              message: 'src/audio không được phụ thuộc render.',
+            },
+            {
+              group: ['three', 'three/*'],
+              message: 'src/audio không được dùng three.',
+            },
+          ],
+        },
+      ],
+    },
   },
   {
     files: PURE,
