@@ -1,3 +1,4 @@
+import { reduceMotion } from '../core/motion';
 import type { SceneManager } from '../render/SceneManager';
 
 const FRICTION = 4;
@@ -53,7 +54,8 @@ export class CameraScroller {
 
   endDrag(velocityPxPerSec: number): void {
     this.dragging = false;
-    this.velocity = velocityPxPerSec * this.scene.worldPerPixel;
+    // Giảm chuyển động: thả tay là dừng, không trôi theo quán tính.
+    this.velocity = reduceMotion.value ? 0 : velocityPxPerSec * this.scene.worldPerPixel;
   }
 
   scrollBy(dyPx: number): void {
@@ -78,11 +80,12 @@ export class CameraScroller {
       let y = this.scene.focusY + this.velocity * dt;
       this.velocity *= Math.exp(-FRICTION * dt);
       if (Math.abs(this.velocity) < 0.01) this.velocity = 0;
+      const spring = reduceMotion.value ? 1 : Math.min(1, SPRING * dt);
       if (y < min) {
-        y += (min - y) * Math.min(1, SPRING * dt);
+        y += (min - y) * spring;
         this.velocity = Math.max(0, this.velocity);
       } else if (y > max) {
-        y += (max - y) * Math.min(1, SPRING * dt);
+        y += (max - y) * spring;
         this.velocity = Math.min(0, this.velocity);
       }
       this.scene.focusY = y;

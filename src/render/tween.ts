@@ -1,3 +1,5 @@
+import { reduceMotion } from '../core/motion';
+
 export type Ease = (k: number) => number;
 
 export const linear: Ease = (k) => k;
@@ -22,6 +24,12 @@ export class Tweens {
 
   add(duration: number, update: (k: number) => void, ease: Ease = easeOutCubic): Promise<void> {
     return new Promise((resolve) => {
+      // Giảm chuyển động: nhảy thẳng tới trạng thái cuối.
+      if (reduceMotion.value) {
+        update(1);
+        resolve();
+        return;
+      }
       update(0);
       this.list.push({ elapsed: 0, duration, ease, update, resolve });
     });

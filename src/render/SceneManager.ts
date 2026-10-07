@@ -57,6 +57,14 @@ export class SceneManager {
     return this.visibleHeight / this.height;
   }
 
+  /** Độ nét: 'low' vẽ ở 1x pixel để nhẹ máy; còn lại tối đa 2x. */
+  setQuality(quality: 'auto' | 'low' | 'high'): void {
+    const ratio = quality === 'low' ? 1 : Math.min(window.devicePixelRatio, 2);
+    if (this.renderer.getPixelRatio() === ratio) return;
+    this.renderer.setPixelRatio(ratio);
+    this.resize();
+  }
+
   resize(): void {
     this.width = Math.max(1, this.canvas.clientWidth);
     this.height = Math.max(1, this.canvas.clientHeight);

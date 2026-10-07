@@ -1,9 +1,12 @@
+import { effect } from '@preact/signals-core';
 import { render } from 'preact';
 import './styles.css';
 import { Game } from './core/Game';
+import { reduceMotion } from './core/motion';
+import { LOCALES, SettingsStore, defaultSettings, type Locale } from './core/settings';
 import { holdTabLock } from './core/tabLock';
 import { installDebug, type DebugApi } from './debug';
-import { t } from './i18n';
+import { setLocale, t } from './i18n';
 import { CameraScroller, type ScreenInsets } from './input/CameraScroller';
 import { InputController } from './input/InputController';
 import { Picker } from './input/Picker';
@@ -31,7 +34,21 @@ function safeLocalStorage(): Storage | null {
 function boot(): void {
   const canvas = document.getElementById('scene') as HTMLCanvasElement;
   const uiRoot = document.getElementById('ui')!;
-  document.title = t('app.title');
+  const params = new URLSearchParams(location.search);
+  const storage = safeLocalStorage();
+
+  const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const settings = new SettingsStore(storage, defaultSettings(prefersReducedMotion));
+  // `?lang=en` chỉ đổi ngôn ngữ cho phiên này (dùng khi test), không ghi vào cài đặt.
+  const langParam = params.get('lang');
+  const forcedLocale = LOCALES.includes(langParam as Locale) ? (langParam as Locale) : null;
+  effect(() => {
+    const s = settings.value.value;
+    setLocale(forcedLocale ?? s.locale);
+    document.title = t('app.title');
+    reduceMotion.value = s.reduceMotion;
+    document.documentElement.classList.toggle('reduce-motion', s.reduceMotion);
+  });
 
   let scene: SceneManager;
   try {
@@ -42,7 +59,9 @@ function boot(): void {
     return;
   }
 
-  const game = new Game(safeLocalStorage());
+  effect(() => scene.setQuality(settings.value.value.quality));
+
+  const game = new Game(storage, settings);
   const tweens = new Tweens();
   const sky = new SkyBackground(scene.scene);
   const garden = new GardenView(scene.scene, game, tweens);
@@ -76,13 +95,12 @@ function boot(): void {
   window.addEventListener('resize', measure);
 
   let debug: DebugApi | null = null;
-  if (new URLSearchParams(location.search).has('debug')) debug = installDebug(game, scene, garden, scroller);
+  if (params.has('debug')) debug = installDebug(game, scene, garden, scroller);
 
   // Tab chạy bản cũ (save mới hơn) không bao giờ lưu nên không cần khóa, cũng không được giành khóa của tab đang chơi.
   if (game.blocked.value !== 'tooNew') holdTabLock(() => game.block('otherTab'));
   game.start();
   // Quà đăng nhập tự mở một lần mỗi phiên. Ở chế độ debug (test) chỉ mở khi có `?modals`.
-  const params = new URLSearchParams(location.search);
   if (loginClaimable(game.state.value, game.clock.now()) && (!params.has('debug') || params.has('modals'))) {
     loginModalOpen.value = true;
   }

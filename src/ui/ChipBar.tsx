@@ -10,7 +10,7 @@ export function ChipBar() {
   const game = useGame();
   const state = game.state.value;
   const now = game.now.value;
-  const openPanel = (id: 'quests' | 'balloon') => {
+  const openPanel = (id: 'quests' | 'balloon' | 'settings') => {
     game.ui.selected.value = null;
     game.ui.panel.value = id;
   };
@@ -61,6 +61,15 @@ export function ChipBar() {
           </small>
         </button>
       )}
+      <button
+        class="hud-chip"
+        aria-label={t('chip.settings')}
+        title={t('chip.settings')}
+        onClick={() => openPanel('settings')}
+        data-testid="chip-settings"
+      >
+        ⚙️
+      </button>
     </div>
   );
 }

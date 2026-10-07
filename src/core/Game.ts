@@ -19,6 +19,7 @@ import {
   type PlantId,
 } from '../game';
 import { Clock } from './Clock';
+import { SettingsStore } from './settings';
 import { EventBus } from './EventBus';
 
 const randomSeed = (): number => Math.floor(Math.random() * 2 ** 32);
@@ -33,7 +34,8 @@ export type Tool =
   /** Di chuyển chậu/máy: chạm ô nguồn rồi ô đích. */
   | { kind: 'move'; from: SlotRef | null };
 
-export type PanelId = 'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests' | 'balloon';
+export type PanelId =
+  'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests' | 'balloon' | 'settings';
 export type ShopTab = 'seeds' | 'pots' | 'machines' | 'upgrades';
 export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';
 
@@ -96,7 +98,10 @@ export class Game {
   private intervals: ReturnType<typeof setInterval>[] = [];
   private pendingNotices: AppEvent[] = [];
 
-  constructor(private readonly storage: Storage | null) {
+  constructor(
+    private readonly storage: Storage | null,
+    readonly settings: SettingsStore = new SettingsStore(null),
+  ) {
     const now = this.clock.now();
     const raw = storage?.getItem(SAVE_KEY) ?? null;
     this.lastWritten = raw;
