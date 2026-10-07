@@ -1,4 +1,4 @@
-import { asPot, bestPotUid, isReady, nextUidInStack, type ActionError, type ActionResult } from '../game';
+import { asPot, bestPotUid, nextUidInStack, type ActionError, type ActionResult } from '../game';
 import type { Game, Tool } from '../core/Game';
 import type { CameraScroller } from './CameraScroller';
 import type { PickTarget, Picker } from './Picker';
@@ -133,7 +133,7 @@ export class InputController {
     if (tool.kind === 'seed') {
       result = this.game.exec({ type: 'plant', floor, slot, plantId: tool.plantId }, { quiet });
     } else if (tool.kind === 'harvest') {
-      result = this.game.exec({ type: 'harvest', floor, slot }, { quiet });
+      result = this.game.exec({ type: 'sweep', floor, slot }, { quiet });
     } else {
       // Mỗi ô lấy chiếc kế tiếp trong chồng chậu đang cầm.
       const uid = nextUidInStack(this.game.state.value, tool.stack);
@@ -166,12 +166,14 @@ export class InputController {
       else this.game.events.emit({ type: 'needPot' });
       return;
     }
-    const pot = asPot(content);
-    if (pot?.plant && isReady(pot.plant, this.game.clock.now())) {
-      ui.selected.value = null;
-      this.game.exec({ type: 'harvest', floor, slot });
+    // Chạm vào ô: bắt sâu / thu hoạch nếu có việc; không có việc gì thì chọn ô để xem thông tin.
+    const swept = this.game.exec({ type: 'sweep', floor, slot }, { quiet: ['NOT_READY', 'NOTHING_TO_DO'] });
+    if (swept.ok) {
+      const pot = asPot(this.game.state.value.floors[floor]?.slots[slot]);
+      if (!pot?.plant) ui.selected.value = null;
       return;
     }
+    if (swept.error === 'STORAGE_FULL') return;
     const same = ui.selected.value?.floor === floor && ui.selected.value.slot === slot;
     ui.selected.value = same ? null : { floor, slot };
   }

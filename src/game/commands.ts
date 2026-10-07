@@ -1,6 +1,7 @@
 import {
   buyPot,
   buySeed,
+  catchPest,
   deliverOrder,
   discardOrder,
   harvest,
@@ -8,6 +9,7 @@ import {
   plant,
   sellItem,
   speedUp,
+  sweep,
   unlockFloor,
   upgradeStorage,
 } from './actions';
@@ -26,6 +28,8 @@ export type Command =
   | { type: 'placePot'; floor: number; slot: number; uid: number }
   | { type: 'plant'; floor: number; slot: number; plantId: PlantId }
   | { type: 'harvest'; floor: number; slot: number }
+  | { type: 'catchPest'; floor: number; slot: number }
+  | { type: 'sweep'; floor: number; slot: number }
   | { type: 'speedUp'; floor: number; slot: number }
   | { type: 'sellItem'; id: BarnItemId; qty: number }
   | { type: 'upgradeStorage' }
@@ -57,6 +61,10 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return plant(s, c.floor, c.slot, c.plantId, now);
     case 'harvest':
       return harvest(s, c.floor, c.slot, now);
+    case 'catchPest':
+      return catchPest(s, c.floor, c.slot, now);
+    case 'sweep':
+      return sweep(s, c.floor, c.slot, now);
     case 'speedUp':
       return speedUp(s, c.floor, c.slot, now);
     case 'sellItem':
@@ -103,6 +111,8 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   placePot: { floor: FIELD.index, slot: FIELD.index, uid: FIELD.uid },
   plant: { floor: FIELD.index, slot: FIELD.index, plantId: FIELD.plantId },
   harvest: { floor: FIELD.index, slot: FIELD.index },
+  catchPest: { floor: FIELD.index, slot: FIELD.index },
+  sweep: { floor: FIELD.index, slot: FIELD.index },
   speedUp: { floor: FIELD.index, slot: FIELD.index },
   sellItem: { id: FIELD.barnItem, qty: FIELD.qty },
   upgradeStorage: {},

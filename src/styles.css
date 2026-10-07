@@ -954,3 +954,8 @@ h3 {
   border-left-color: #ffb300;
   border-left-style: double;
 }
+
+.btn.danger {
+  background: var(--danger);
+  color: #fff;
+}

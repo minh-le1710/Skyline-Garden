@@ -99,6 +99,15 @@ export const vi = {
   'pot.info.harvest': 'Thu hoạch',
   'pot.info.speedUp': 'Chín ngay',
   'pot.info.plant': 'Trồng cây',
+  'pot.info.pest': '{name} đang ăn cây!',
+  'pot.info.catch': 'Bắt sâu',
+  'pot.info.nibbled': 'Bị sâu ăn: hụt 1 nông sản',
+  'pot.info.bonusYield': '🍀 Được mùa +1',
+
+  'pest.caterpillar': 'Sâu Xanh',
+  'pest.snail': 'Ốc Sên Mây',
+  'pest.beetle': 'Bọ Cánh Cam',
+  'pest.starmoth': 'Bướm Sao Đêm',
 
   'shop.title': 'Cửa hàng',
   'shop.tab.seeds': 'Hạt giống',
@@ -169,6 +178,7 @@ export const vi = {
   'common.ruby': 'ruby',
 
   'toast.welcomeBack': 'Chào mừng trở lại! {n} chậu đã chín trong lúc bạn đi vắng.',
+  'toast.pestsWaiting': 'Có {n} con sâu đang phá vườn, bắt nhanh nào!',
   'toast.ordersArrived': 'Cú mang {n} đơn hàng mới tới!',
   'toast.delivered': 'Giao hàng thành công! +{gold} vàng, +{xp} XP',
   'toast.floorUnlocked': 'Đã mở khóa tầng {n}!',
@@ -187,6 +197,8 @@ export const vi = {
   'error.POT_BAG_FULL': 'Kho chậu đã đầy',
   'error.NOT_SELLABLE': 'Món này không bán được',
   'error.MAX_LEVEL': 'Đã đạt mức tối đa',
+  'error.NO_PEST': 'Không có sâu để bắt',
+  'error.NOTHING_TO_DO': 'Không có gì để làm ở đây',
   'error.SLOT_OCCUPIED': 'Ô này đã có chậu',
   'error.SLOT_BUSY': 'Chậu này đang có cây',
   'error.NOTHING_PLANTED': 'Chậu này chưa trồng gì',

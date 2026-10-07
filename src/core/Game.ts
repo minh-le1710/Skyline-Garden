@@ -14,6 +14,7 @@ import {
   type Command,
   type GameEvent,
   type GameState,
+  type OfflineSummary,
   type PlantId,
 } from '../game';
 import { Clock } from './Clock';
@@ -39,7 +40,7 @@ export interface SlotRef {
 export type AppEvent =
   | GameEvent
   | { type: 'actionFailed'; error: ActionError }
-  | { type: 'welcomeBack'; readyWhileAway: number; awayMs: number }
+  | ({ type: 'welcomeBack' } & OfflineSummary)
   /** Người chơi chạm vào ô chưa có chậu mà kho không còn chậu. */
   | { type: 'needPot' }
   /** Toàn bộ state bị thay (chơi lại, nhập save, đồng bộ server): view dựng lại không hiệu ứng. */
@@ -96,7 +97,9 @@ export class Game {
         // Giữ bản save trước khi nâng cấp, phòng khi migration có lỗi.
         if (loaded.migratedFrom !== null && raw) this.writeKey(BACKUP_KEY, raw);
         const summary = offlineSummary(state, now);
-        if (summary.readyWhileAway > 0) this.pendingNotices.push({ type: 'welcomeBack', ...summary });
+        if (summary.readyWhileAway + summary.pestsWaiting > 0) {
+          this.pendingNotices.push({ type: 'welcomeBack', ...summary });
+        }
         break;
       }
       case 'corrupt':

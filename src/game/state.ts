@@ -159,12 +159,22 @@ export function* allPots(state: GameState): Generator<PotRef> {
   }
 }
 
+export interface OfflineSummary {
+  awayMs: number;
+  readyWhileAway: number;
+  pestsWaiting: number;
+}
+
 /** Tóm tắt những gì đã xảy ra trong lúc người chơi đi vắng. */
-export function offlineSummary(state: GameState, now: number): { awayMs: number; readyWhileAway: number } {
+export function offlineSummary(state: GameState, now: number): OfflineSummary {
   let readyWhileAway = 0;
+  let pestsWaiting = 0;
   for (const { pot } of allPots(state)) {
     const p = pot.plant;
-    if (p && !isReady(p, state.lastSeenAt) && isReady(p, now)) readyWhileAway++;
+    if (!p) continue;
+    if (!isReady(p, state.lastSeenAt) && isReady(p, now)) readyWhileAway++;
+    if (p.pest && p.pest.at < p.plantedAt + p.growMs && p.pest.at <= now && now < p.pest.leaveAt)
+      pestsWaiting++;
   }
-  return { awayMs: Math.max(0, now - state.lastSeenAt), readyWhileAway };
+  return { awayMs: Math.max(0, now - state.lastSeenAt), readyWhileAway, pestsWaiting };
 }

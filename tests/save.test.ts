@@ -48,7 +48,7 @@ describe('lưu game', () => {
     s = ok(plant(s, 0, 1, 'sunflower', T0));
     s.lastSeenAt = T0 + 1_000;
     const back = deserialize(serialize(s))!;
-    expect(offlineSummary(back, T0 + 60_000)).toEqual({ awayMs: 59_000, readyWhileAway: 1 });
+    expect(offlineSummary(back, T0 + 60_000)).toEqual({ awayMs: 59_000, readyWhileAway: 1, pestsWaiting: 0 });
     expect(harvest(back, 0, 0, T0 + 60_000).ok).toBe(true);
   });
 });

@@ -241,7 +241,28 @@ export interface GameState {
 
 export type GameEvent =
   | { type: 'planted'; floor: number; slot: number; plantId: PlantId }
-  | { type: 'harvested'; floor: number; slot: number; plantId: PlantId; qty: number; xp: number }
+  | {
+      type: 'harvested';
+      floor: number;
+      slot: number;
+      plantId: PlantId;
+      qty: number;
+      xp: number;
+      /** Vàng thêm từ chỉ số chậu. */
+      gold: number;
+      /** Bị sâu ăn mất một phần. */
+      nibbled: boolean;
+    }
+  | {
+      type: 'pestCaught';
+      floor: number;
+      slot: number;
+      pestId: PestId;
+      by: 'player' | 'pet' | 'friend';
+      xp: number;
+      gold: number;
+      items: Counts<ChestItemId>;
+    }
   | { type: 'potPlaced'; floor: number; slot: number; potId: PotId; uid: number }
   | { type: 'speedUp'; floor: number; slot: number; ruby: number }
   | { type: 'bought'; item: 'seed'; id: PlantId; qty: number; gold: number }
@@ -275,6 +296,8 @@ export const ACTION_ERRORS = [
   'NO_ORDER',
   'MAX_FLOORS',
   'MAX_LEVEL',
+  'NO_PEST',
+  'NOTHING_TO_DO',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

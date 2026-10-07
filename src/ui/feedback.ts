@@ -1,5 +1,6 @@
 import { signal } from '@preact/signals';
 import type { Game } from '../core/Game';
+import type { ItemId } from '../game';
 import { t } from '../i18n';
 import { GOLD, ITEM_ICON, XP } from './icons';
 import { plantName, potName } from './names';
@@ -29,12 +30,12 @@ let nextId = 1;
 const TOAST_MS = 2600;
 const MAX_TOASTS = 3;
 
-export function showToast(text: string, kind: Toast['kind'] = 'info'): void {
+export function showToast(text: string, kind: Toast['kind'] = 'info', durationMs = TOAST_MS): void {
   const toast = { id: nextId++, text, kind };
   // Không lặp lại cùng một thông báo đang hiện.
   if (toasts.value.some((t) => t.text === text)) return;
   toasts.value = [...toasts.value, toast].slice(-MAX_TOASTS);
-  setTimeout(() => (toasts.value = toasts.value.filter((t) => t.id !== toast.id)), TOAST_MS);
+  setTimeout(() => (toasts.value = toasts.value.filter((t) => t.id !== toast.id)), durationMs);
 }
 
 export function fly(
@@ -66,11 +67,22 @@ export function connectFeedback(
         showToast(t(`error.${event.error}` as const), 'error');
         break;
       case 'saveRecovered':
-        showToast(t('toast.saveRecovered'), 'error');
+        // Thông báo quan trọng: để lâu hơn.
+        showToast(t('toast.saveRecovered'), 'error', 9000);
         break;
       case 'welcomeBack':
-        showToast(t('toast.welcomeBack', { n: event.readyWhileAway }), 'success');
+        if (event.readyWhileAway > 0)
+          showToast(t('toast.welcomeBack', { n: event.readyWhileAway }), 'success');
+        if (event.pestsWaiting > 0) showToast(t('toast.pestsWaiting', { n: event.pestsWaiting }));
         break;
+      case 'pestCaught': {
+        const from = slotScreenPosition(event.floor, event.slot);
+        for (const [id, n] of Object.entries(event.items))
+          fly(ITEM_ICON[id as ItemId], `+${n}`, from, 'storage');
+        fly(GOLD, `+${event.gold}`, { x: from.x + 20, y: from.y - 10 }, 'gold');
+        fly(XP, `+${event.xp}`, { x: from.x, y: from.y - 30 }, 'xp');
+        break;
+      }
       case 'ordersArrived':
         showToast(t('toast.ordersArrived', { n: event.count }));
         break;
@@ -78,6 +90,7 @@ export function connectFeedback(
         const from = slotScreenPosition(event.floor, event.slot);
         fly(ITEM_ICON[event.plantId], `+${event.qty}`, from, 'storage');
         fly(XP, `+${event.xp}`, { x: from.x, y: from.y - 24 }, 'xp');
+        if (event.gold > 0) fly(GOLD, `+${event.gold}`, { x: from.x + 20, y: from.y - 12 }, 'gold');
         break;
       }
       case 'sold':

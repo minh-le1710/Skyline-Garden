@@ -6,6 +6,9 @@ import { POT_BAG_MAX, SHOP_POTS } from './config/pots';
 import { commit, fail } from './commit';
 import { isBarnItemId, isInt, isPlantId, isPositiveInt, isPotId } from './ids';
 import { canFulfill } from './orders';
+import { activePest, harvestQty, pestCatchGold, pestCatchXp, rollPestDrop, rollPlanting } from './pests';
+import { grantReward } from './rewards';
+import { withRng } from './rng';
 import { addXp } from './progression';
 import {
   addCount,
@@ -13,6 +16,7 @@ import {
   emptyFloor,
   getSlot,
   growMsFor,
+  potStat,
   harvestXpFor,
   hasItems,
   isReady,
@@ -21,7 +25,7 @@ import {
   removeItems,
   storageUsed,
 } from './state';
-import type { ActionResult, BarnItemId, GameState, Pot, PlantId, PotId } from './types';
+import type { ActionResult, BarnItemId, GameEvent, GameState, Pot, PlantId, PotId } from './types';
 
 // Các action của khu vườn (Mốc 1). Mỗi action: kiểm tra trên state cũ, rồi sửa trên bản sao qua commit().
 
@@ -101,15 +105,45 @@ export function plant(
   return commit(state, now, (s, events) => {
     addCount(s.seeds, plantId, -1);
     const target = draftPot(s, floor, slot);
+    const growMs = growMsFor(plantId, target);
+    const roll = withRng(s, 'crops', (rng) =>
+      rollPlanting(rng, plantId, now, growMs, s.level, potStat(target, 'yieldPct')),
+    );
     target.plant = {
       plantId,
       plantedAt: now,
-      growMs: growMsFor(plantId, target),
-      yield: PLANTS[plantId].yield,
-      pest: null,
+      growMs,
+      yield: PLANTS[plantId].yield + (roll.bonusYield ? 1 : 0),
+      pest: roll.pest,
     };
     events.push({ type: 'planted', floor, slot, plantId });
   });
+}
+
+/** Bắt sâu trên một chậu trong bản nháp (dùng chung cho bắt tay, thu hoạch và thú cưng). */
+export function catchPestInDraft(
+  s: GameState,
+  floor: number,
+  slot: number,
+  now: number,
+  events: GameEvent[],
+  by: 'player' | 'pet' | 'friend',
+): void {
+  const target = draftPot(s, floor, slot);
+  const pest = target.plant!.pest!;
+  target.plant!.pest = null;
+  const items = withRng(s, 'loot', (rng) => rollPestDrop(rng, pest.id));
+  const xp = pestCatchXp(s.level);
+  const gold = pestCatchGold(s.level);
+  events.push({ type: 'pestCaught', floor, slot, pestId: pest.id, by, xp, gold, items });
+  grantReward(s, { gold, xp, items }, now, events);
+}
+
+export function catchPest(state: GameState, floor: number, slot: number, now: number): ActionResult {
+  const pot = potAt(state, floor, slot);
+  if (!isPot(pot)) return pot;
+  if (!pot.plant || !activePest(pot.plant, now)) return fail('NO_PEST');
+  return commit(state, now, (s, events) => catchPestInDraft(s, floor, slot, now, events, 'player'));
 }
 
 export function harvest(state: GameState, floor: number, slot: number, now: number): ActionResult {
@@ -117,15 +151,47 @@ export function harvest(state: GameState, floor: number, slot: number, now: numb
   if (!isPot(pot)) return pot;
   if (!pot.plant) return fail('NOTHING_PLANTED');
   if (!isReady(pot.plant, now)) return fail('NOT_READY');
-  const { plantId, yield: qty } = pot.plant;
+  const qty = harvestQty(pot.plant, now);
   if (storageUsed(state) + qty > state.storageCapacity) return fail('STORAGE_FULL');
+  return commit(state, now, (s, events) => harvestInDraft(s, floor, slot, now, events));
+}
+
+/** Thu hoạch trong bản nháp (đã kiểm tra chín và đủ chỗ). Sâu còn trên cây thì bắt luôn, đủ thưởng. */
+function harvestInDraft(s: GameState, floor: number, slot: number, now: number, events: GameEvent[]): void {
+  const target = draftPot(s, floor, slot);
+  if (activePest(target.plant!, now)) catchPestInDraft(s, floor, slot, now, events, 'player');
+  const crop = target.plant!;
+  const qty = harvestQty(crop, now);
+  const nibbled = qty < crop.yield;
+  const xp = harvestXpFor(crop.plantId, target);
+  const gold = Math.floor((PLANTS[crop.plantId].sellPrice * qty * potStat(target, 'goldPct')) / 100);
+  target.plant = null;
+  addCount(s.items, crop.plantId, qty);
+  s.gold += gold;
+  events.push({ type: 'harvested', floor, slot, plantId: crop.plantId, qty, xp, gold, nibbled });
+  addXp(s, xp, now, events);
+}
+
+/**
+ * Làm mọi việc có thể ở một ô trong một lần chạm/kéo: bắt sâu, thu hoạch cây chín.
+ * (Máy chế biến được thêm vào ở bước sau.)
+ */
+export function sweep(state: GameState, floor: number, slot: number, now: number): ActionResult {
+  const content = getSlot(state, floor, slot);
+  if (content === undefined) return fail('INVALID');
+  if (content?.kind !== 'pot' || !content.plant) return fail('NOTHING_TO_DO');
+  const crop = content.plant;
+  const ready = isReady(crop, now);
+  const pest = activePest(crop, now);
+  if (!ready && !pest) return fail('NOT_READY');
+  if (ready && storageUsed(state) + harvestQty(crop, now) > state.storageCapacity) {
+    // Kho đầy: vẫn bắt sâu nếu có, nhưng báo lỗi nếu chỉ còn việc thu hoạch.
+    if (!pest) return fail('STORAGE_FULL');
+    return commit(state, now, (s, events) => catchPestInDraft(s, floor, slot, now, events, 'player'));
+  }
   return commit(state, now, (s, events) => {
-    const target = draftPot(s, floor, slot);
-    const xp = harvestXpFor(plantId, target);
-    target.plant = null;
-    addCount(s.items, plantId, qty);
-    events.push({ type: 'harvested', floor, slot, plantId, qty, xp });
-    addXp(s, xp, now, events);
+    if (ready) harvestInDraft(s, floor, slot, now, events);
+    else catchPestInDraft(s, floor, slot, now, events, 'player');
   });
 }
 

@@ -9,6 +9,7 @@ import {
   type Counts,
   type GameState,
   type ItemId,
+  type PestId,
   type PlantId,
   type PotId,
 } from './game';
@@ -31,6 +32,8 @@ export interface DebugApi {
   addGold(n: number): void;
   addRuby(n: number): void;
   setLevel(level: number): void;
+  /** Gắn một con sâu xuất hiện ngay trên cây ở ô (floor, slot). */
+  spawnPest(floor: number, slot: number, id?: PestId): void;
   /** Tặng đồ trực tiếp (chỉ để dựng tình huống test). `pots` tạo chậu cửa hàng theo loại. */
   grant(items: { seeds?: Counts<PlantId>; items?: Counts<ItemId>; pots?: Counts<PotId> }): void;
   reset(): void;
@@ -102,6 +105,15 @@ export function installDebug(
             );
           }
         }
+      }),
+    spawnPest: (floor, slot, id = 'caterpillar') =>
+      patch((s) => {
+        const content = s.floors[floor]?.slots[slot];
+        if (content?.kind !== 'pot' || !content.plant) throw new Error('Ô này không có cây');
+        const now = game.clock.now();
+        content.plant.pest = { id, at: now, leaveAt: now + 30 * 60_000 };
+        // Sâu chỉ hiện khi tới trước lúc cây chín.
+        content.plant.growMs = Math.max(content.plant.growMs, now - content.plant.plantedAt + 60_000);
       }),
     reset: () => game.reset(),
     screenPos,

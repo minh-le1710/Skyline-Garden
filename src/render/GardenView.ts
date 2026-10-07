@@ -12,7 +12,17 @@ import {
   type BufferGeometry,
   type Scene,
 } from 'three';
-import { MAX_FLOORS, asPot, growthProgress, type GameState, type PlantId, type SlotContent } from '../game';
+import {
+  MAX_FLOORS,
+  activePest,
+  asPot,
+  growthProgress,
+  isNibbled,
+  type GameState,
+  type PlantId,
+  type PlantedCrop,
+  type SlotContent,
+} from '../game';
 import type { AppEvent, Game } from '../core/Game';
 import { t } from '../i18n';
 import { cloudGeometry, seeded, type Puff } from './clouds';
@@ -27,11 +37,15 @@ import {
   readySparkle,
   selectionRing,
   type PlantModel,
+  alertBubble,
   buildMachine,
+  buildPest,
+  type PestModel,
 } from './models';
 import { easeOutBack, type Tweens } from './tween';
 
 const SPROUT_END = 0.25;
+const NIBBLED_MATERIAL = toon(0xa08455);
 
 /** Một ô trên tầng mây: chậu, cây và các trạng thái hiển thị. */
 class SlotView {
@@ -42,6 +56,8 @@ class SlotView {
   private plantRoot: Group | null = null;
   private sparkle: Mesh | null = null;
   private stage = -1;
+  private pest: { model: PestModel; bubble: Sprite } | null = null;
+  private nibbledShown = false;
   /** Bật hiệu ứng "nảy" khi đổi giai đoạn; tắt cho lần dựng đầu tiên lúc tải game. */
   private animateNextStage = false;
   private readonly phase = Math.random() * Math.PI * 2;
@@ -88,6 +104,8 @@ class SlotView {
       this.model = null;
       this.sparkle = null;
     }
+    this.pest = null;
+    this.nibbledShown = false;
     this.stage = -1;
     if (pot?.plant) {
       this.model = buildPlant(pot.plant.plantId);
@@ -126,6 +144,33 @@ class SlotView {
       bloom.rotation.z = body.rotation.z;
       this.sparkle!.rotation.y = time * 2.5;
       this.sparkle!.position.y = 1.45 + Math.sin(time * 3 + this.phase) * 0.06;
+      if (!this.nibbledShown && isNibbled(plant, now)) {
+        // Cây bị sâu ăn: lá ngả màu nâu.
+        body.traverse((o) => {
+          if (o instanceof Mesh) o.material = NIBBLED_MATERIAL;
+        });
+        this.nibbledShown = true;
+      }
+    }
+    this.updatePest(plant, now, time);
+  }
+
+  private updatePest(plant: PlantedCrop, now: number, time: number): void {
+    const active = activePest(plant, now);
+    if (active && !this.pest && plant.pest) {
+      const model = buildPest(plant.pest.id);
+      model.root.position.set(0.28, 0.25, 0.3);
+      const bubble = alertBubble();
+      bubble.position.set(0, 1.25, 0.2);
+      this.plantRoot!.add(model.root, bubble);
+      this.pest = { model, bubble };
+    } else if (!active && this.pest) {
+      this.plantRoot!.remove(this.pest.model.root, this.pest.bubble);
+      this.pest = null;
+    }
+    if (this.pest) {
+      this.pest.model.animate(time + this.phase);
+      this.pest.bubble.position.y = 1.25 + Math.abs(Math.sin(time * 4)) * 0.12;
     }
   }
 

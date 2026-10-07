@@ -18,6 +18,8 @@ export const commandArb: fc.Arbitrary<Command> = fc.oneof(
   { weight: 1, arbitrary: fc.record({ type: fc.constant('placePot' as const), floor, slot, uid }) },
   { weight: 5, arbitrary: fc.record({ type: fc.constant('plant' as const), floor, slot, plantId }) },
   { weight: 5, arbitrary: fc.record({ type: fc.constant('harvest' as const), floor, slot }) },
+  { weight: 2, arbitrary: fc.record({ type: fc.constant('catchPest' as const), floor, slot }) },
+  { weight: 3, arbitrary: fc.record({ type: fc.constant('sweep' as const), floor, slot }) },
   { weight: 1, arbitrary: fc.record({ type: fc.constant('speedUp' as const), floor, slot }) },
   { weight: 2, arbitrary: fc.record({ type: fc.constant('sellItem' as const), id: itemId, qty }) },
   { weight: 1, arbitrary: fc.constant({ type: 'upgradeStorage' as const }) },

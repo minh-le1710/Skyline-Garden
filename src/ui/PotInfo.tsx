@@ -1,4 +1,14 @@
-import { asPot, formatDuration, growthProgress, isReady, remainingMs, speedUpCost } from '../game';
+import {
+  PLANTS,
+  activePest,
+  asPot,
+  formatDuration,
+  growthProgress,
+  isNibbled,
+  isReady,
+  remainingMs,
+  speedUpCost,
+} from '../game';
 import { t } from '../i18n';
 import { useGame } from './context';
 import { ITEM_ICON, PotIcon, RUBY } from './icons';
@@ -47,6 +57,7 @@ export function PotInfo() {
   const plant = pot.plant;
   const ready = isReady(plant, now);
   const remaining = remainingMs(plant, now);
+  const pest = activePest(plant, now) ? plant.pest : null;
   return (
     <div class="pot-info" data-testid="pot-info">
       <span class="pot-info-icon">{ITEM_ICON[plant.plantId]}</span>
@@ -59,8 +70,19 @@ export function PotInfo() {
           {ready ? t('pot.info.ready') : t('pot.info.remaining', { time: formatDuration(remaining) })} ·{' '}
           {potName(pot.potId)}
         </small>
+        {plant.yield > PLANTS[plant.plantId].yield && <small>{t('pot.info.bonusYield')}</small>}
+        {pest && <small class="warn">🐛 {t('pot.info.pest', { name: t(`pest.${pest.id}` as const) })}</small>}
+        {!pest && isNibbled(plant, now) && <small class="warn">{t('pot.info.nibbled')}</small>}
       </div>
-      {ready ? (
+      {pest ? (
+        <button
+          class="btn danger"
+          data-testid="catch-pest"
+          onClick={() => game.exec({ type: 'catchPest', floor, slot })}
+        >
+          {t('pot.info.catch')}
+        </button>
+      ) : ready ? (
         <button
           class="btn primary"
           onClick={() => {

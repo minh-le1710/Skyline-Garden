@@ -13,6 +13,12 @@ function recordStats(s: GameState, events: readonly GameEvent[]): void {
       case 'harvested':
         add('harvests', 1);
         add('cropsHarvested', e.qty);
+        add('goldEarned', e.gold);
+        if (e.nibbled) add('pestsEscaped', 1);
+        break;
+      case 'pestCaught':
+        add('pestsCaught', 1);
+        add('goldEarned', e.gold);
         break;
       case 'orderDelivered':
         add('ordersDelivered', 1);
