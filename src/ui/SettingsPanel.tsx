@@ -143,6 +143,7 @@ export function SettingsPanel() {
           ))}
         </div>
       </div>
+      <p class="muted small">{t('settings.qualityHint')}</p>
       <label class="setting-row">
         <span>{t('settings.reduceMotion')}</span>
         <input

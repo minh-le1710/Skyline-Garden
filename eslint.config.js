@@ -17,6 +17,8 @@ export default tseslint.config(
       'server/dist',
       'android',
       'ios',
+      // worktree tạm của các agent
+      '.claude',
     ],
   },
   js.configs.recommended,

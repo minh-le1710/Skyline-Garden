@@ -17,9 +17,24 @@ const CAMERA_TILT = 0.16;
 /** Luôn thấy ít nhất chừng này đơn vị theo chiều dọc (màn hình ngang). */
 const MIN_VISIBLE_HEIGHT = 9.5;
 
+/** Ánh sáng chung cho mọi màn: trời sáng dịu + nắng chéo. */
+export function addDefaultLights(scene: Scene): void {
+  scene.add(new HemisphereLight(0xeaf4ff, 0xffe4cc, 1.6));
+  scene.add(new AmbientLight(0xffffff, 0.35));
+  const sun = new DirectionalLight(0xfff2dd, 2.2);
+  sun.position.set(6, 12, 10);
+  scene.add(sun);
+}
+
+export interface RendererOptions {
+  antialias: boolean;
+  powerPreference: WebGLPowerPreference;
+  pixelRatio: number;
+}
+
+/** Giữ renderer, camera và cách căn khung hình; mỗi màn (vườn, mỏ…) có Scene riêng. */
 export class SceneManager {
   readonly renderer: WebGLRenderer;
-  readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(FOV, 1, 0.5, 1000);
   /** Tâm nhìn theo trục Y (thế giới). */
   focusY = 0;
@@ -28,16 +43,17 @@ export class SceneManager {
   private height = 1;
   private readonly tmp = new Vector3();
 
-  constructor(readonly canvas: HTMLCanvasElement) {
-    this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  constructor(
+    readonly canvas: HTMLCanvasElement,
+    options: RendererOptions = { antialias: true, powerPreference: 'default', pixelRatio: 1 },
+  ) {
+    this.renderer = new WebGLRenderer({
+      canvas,
+      antialias: options.antialias,
+      powerPreference: options.powerPreference,
+    });
     this.renderer.outputColorSpace = SRGBColorSpace;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    this.scene.add(new HemisphereLight(0xeaf4ff, 0xffe4cc, 1.6));
-    this.scene.add(new AmbientLight(0xffffff, 0.35));
-    const sun = new DirectionalLight(0xfff2dd, 2.2);
-    sun.position.set(6, 12, 10);
-    this.scene.add(sun);
+    this.renderer.setPixelRatio(options.pixelRatio);
 
     this.resize();
     window.addEventListener('resize', () => this.resize());
@@ -57,9 +73,11 @@ export class SceneManager {
     return this.visibleHeight / this.height;
   }
 
-  /** Độ nét: 'low' vẽ ở 1x pixel để nhẹ máy; còn lại tối đa 2x. */
-  setQuality(quality: 'auto' | 'low' | 'high'): void {
-    const ratio = quality === 'low' ? 1 : Math.min(window.devicePixelRatio, 2);
+  get pixelRatio(): number {
+    return this.renderer.getPixelRatio();
+  }
+
+  setPixelRatio(ratio: number): void {
     if (this.renderer.getPixelRatio() === ratio) return;
     this.renderer.setPixelRatio(ratio);
     this.resize();
@@ -94,7 +112,7 @@ export class SceneManager {
     return { x: rect.left + ((v.x + 1) / 2) * this.width, y: rect.top + ((1 - v.y) / 2) * this.height };
   }
 
-  render(): void {
-    this.renderer.render(this.scene, this.camera);
+  render(scene: Scene): void {
+    this.renderer.render(scene, this.camera);
   }
 }

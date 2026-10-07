@@ -63,3 +63,18 @@ test('tab chạy bản cũ (save mới hơn) không giành quyền của tab đa
   await expect(page.getByTestId('blocking-notice')).toBeHidden();
   await stale.close();
 });
+
+test('tab cũ lưu muộn lúc chuyển giao: tab giữ khóa nhận bản mới hơn, không tự dừng', async ({ page }) => {
+  await openGame(page);
+  await page.evaluate(() => window.__skyline!.game.save());
+  // Giả lập tab cũ chưa kịp biết mình mất khóa và ghi một bản save hợp lệ, mới hơn.
+  await page.evaluate((key) => {
+    const late = JSON.parse(localStorage.getItem(key)!);
+    late.gold = 777_777;
+    const value = JSON.stringify(late);
+    localStorage.setItem(key, value);
+    window.dispatchEvent(new StorageEvent('storage', { key, newValue: value }));
+  }, SAVE_KEY);
+  await expect.poll(async () => (await state(page)).gold).toBe(777_777);
+  await expect(page.getByTestId('blocking-notice')).toBeHidden();
+});

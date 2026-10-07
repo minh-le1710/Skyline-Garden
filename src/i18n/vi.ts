@@ -273,6 +273,7 @@ export const vi = {
   'settings.quality.auto': 'Tự động',
   'settings.quality.low': 'Nhẹ',
   'settings.quality.high': 'Đẹp',
+  'settings.qualityHint': 'Khử răng cưa đổi sau khi tải lại trang.',
   'settings.reduceMotion': 'Giảm chuyển động',
   'settings.data': 'Dữ liệu',
   'settings.export': 'Xuất save',

@@ -1,28 +1,14 @@
-import { asPot, bestPotUid, nextUidInStack, type ActionError, type ActionResult } from '../game';
-import type { Game, Tool } from '../core/Game';
-import type { CameraScroller } from './CameraScroller';
-import type { PickTarget, Picker } from './Picker';
+import type { Game } from '../core/Game';
+import type { Screen } from '../render/screens/Screen';
 
 /** Di chuyển quá chừng này pixel thì coi là kéo, không phải chạm. */
 const TAP_SLOP = 8;
 
-/** Khi kéo qua nhiều chậu, các lỗi này là bình thường (vd. cây chưa chín) nên không báo. */
-const DRAG_QUIET: ActionError[] = [
-  'SLOT_BUSY',
-  'NOT_READY',
-  'NO_POT',
-  'NOTHING_PLANTED',
-  'SLOT_OCCUPIED',
-  'NOT_A_POT',
-  'NOTHING_TO_COLLECT',
-];
-
 type Mode = 'idle' | 'pending' | 'scroll' | 'tool';
 
 /**
- * Điều khiển cảm ứng/chuột trên canvas:
- * - Đang cầm công cụ (hạt, liềm, chậu): nhấn vào ô rồi kéo qua nhiều ô để áp dụng lần lượt.
- * - Không cầm công cụ: kéo để cuộn tầng, chạm để chọn chậu / thu hoạch / mở tầng.
+ * Nhận dạng cử chỉ trên canvas (chạm, kéo cuộn có quán tính, kéo công cụ, lăn chuột, Escape)
+ * rồi giao cho màn đang hiển thị: `screen.input` xử lý chạm/công cụ, `screen.scroller` cuộn camera.
  */
 export class InputController {
   private mode: Mode = 'idle';
@@ -31,14 +17,14 @@ export class InputController {
   private startY = 0;
   private lastY = 0;
   private samples: { y: number; t: number }[] = [];
-  private visited = new Set<string>();
-  private reported = new Set<ActionError>();
+  /** Màn nhận cử chỉ đang diễn ra (giữ nguyên dù màn đổi giữa chừng). */
+  private screen: Screen | null = null;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly game: Game,
-    private readonly picker: Picker,
-    private readonly scroller: CameraScroller,
+    private readonly active: () => Screen | null,
+    private readonly onActivity: () => void = () => {},
   ) {
     canvas.addEventListener('pointerdown', (e) => this.onDown(e));
     canvas.addEventListener('pointermove', (e) => this.onMove(e));
@@ -50,44 +36,32 @@ export class InputController {
     });
   }
 
-  private pick(e: PointerEvent): PickTarget | null {
-    return this.picker.pick(e.clientX, e.clientY, this.game.state.value);
-  }
-
   private onDown(e: PointerEvent): void {
-    if (this.mode !== 'idle') return;
+    this.onActivity();
+    const screen = this.active();
+    if (this.mode !== 'idle' || !screen) return;
+    this.screen = screen;
     this.pointerId = e.pointerId;
     this.startX = e.clientX;
     this.startY = this.lastY = e.clientY;
     this.samples = [{ y: e.clientY, t: e.timeStamp }];
     this.canvas.setPointerCapture(e.pointerId);
-
-    const tool = this.game.ui.tool.value;
-    const target = this.pick(e);
-    if (tool && target?.kind === 'slot') {
-      this.mode = 'tool';
-      this.visited.clear();
-      this.reported.clear();
-      this.applyTool(tool, target.floor, target.slot, false);
-    } else {
-      this.mode = 'pending';
-    }
+    this.mode = screen.input.begin(e.clientX, e.clientY);
   }
 
   private onMove(e: PointerEvent): void {
-    if (e.pointerId !== this.pointerId) return;
+    if (e.pointerId !== this.pointerId || !this.screen) return;
+    this.onActivity();
     if (this.mode === 'tool') {
-      const tool = this.game.ui.tool.value;
-      const target = this.pick(e);
-      if (tool && target?.kind === 'slot') this.applyTool(tool, target.floor, target.slot, true);
+      this.screen.input.toolMove?.(e.clientX, e.clientY);
       return;
     }
     if (this.mode === 'pending' && Math.hypot(e.clientX - this.startX, e.clientY - this.startY) > TAP_SLOP) {
       this.mode = 'scroll';
-      this.scroller.startDrag();
+      this.screen.scroller.startDrag();
     }
     if (this.mode === 'scroll') {
-      this.scroller.dragBy(e.clientY - this.lastY);
+      this.screen.scroller.dragBy(e.clientY - this.lastY);
       this.lastY = e.clientY;
       this.samples.push({ y: e.clientY, t: e.timeStamp });
       if (this.samples.length > 6) this.samples.shift();
@@ -95,15 +69,16 @@ export class InputController {
   }
 
   private onUp(e: PointerEvent): void {
-    if (e.pointerId !== this.pointerId) return;
-    if (this.mode === 'pending') this.onTap(this.pick(e));
-    if (this.mode === 'scroll') this.scroller.endDrag(this.releaseVelocity(e));
+    if (e.pointerId !== this.pointerId || !this.screen) return;
+    this.onActivity();
+    if (this.mode === 'pending') this.screen.input.tap(e.clientX, e.clientY);
+    if (this.mode === 'scroll') this.screen.scroller.endDrag(this.releaseVelocity(e));
     this.finish(e);
   }
 
   private onCancel(e: PointerEvent): void {
-    if (e.pointerId !== this.pointerId) return;
-    if (this.mode === 'scroll') this.scroller.endDrag(0);
+    if (e.pointerId !== this.pointerId || !this.screen) return;
+    if (this.mode === 'scroll') this.screen.scroller.endDrag(0);
     this.finish(e);
   }
 
@@ -111,6 +86,7 @@ export class InputController {
     if (this.canvas.hasPointerCapture(e.pointerId)) this.canvas.releasePointerCapture(e.pointerId);
     this.mode = 'idle';
     this.pointerId = -1;
+    this.screen = null;
   }
 
   private releaseVelocity(e: PointerEvent): number {
@@ -122,101 +98,7 @@ export class InputController {
 
   private onWheel(e: WheelEvent): void {
     e.preventDefault();
-    this.scroller.scrollBy(-e.deltaY);
-  }
-
-  private applyTool(tool: Tool, floor: number, slot: number, dragging: boolean): void {
-    // Đặt máy và di chuyển chỉ tính lần chạm, không áp dụng dọc đường kéo.
-    if (dragging && (tool.kind === 'machine' || tool.kind === 'move')) return;
-    const key = `${floor}:${slot}`;
-    if (this.visited.has(key)) return;
-    this.visited.add(key);
-    const quiet = dragging ? [...DRAG_QUIET, ...this.reported] : [...this.reported];
-    let result: ActionResult;
-    if (tool.kind === 'seed') {
-      result = this.game.exec({ type: 'plant', floor, slot, plantId: tool.plantId }, { quiet });
-    } else if (tool.kind === 'harvest') {
-      result = this.game.exec({ type: 'sweep', floor, slot }, { quiet });
-    } else if (tool.kind === 'pot') {
-      // Mỗi ô lấy chiếc kế tiếp trong chồng chậu đang cầm.
-      const uid = nextUidInStack(this.game.state.value, tool.stack);
-      if (uid === null) return;
-      result = this.game.exec({ type: 'placePot', floor, slot, uid }, { quiet });
-    } else if (tool.kind === 'machine') {
-      result = this.game.exec({ type: 'buildMachine', machineId: tool.machineId, floor, slot });
-      if (result.ok) this.game.ui.tool.value = null;
-    } else {
-      this.applyMove(tool.from, floor, slot);
-      return;
-    }
-    // Mỗi loại lỗi chỉ báo một lần trong một lần kéo.
-    if (!result.ok) this.reported.add(result.error);
-  }
-
-  /** Công cụ di chuyển: lần chạm đầu chọn ô nguồn (phải có chậu/máy), lần sau đổi chỗ với ô đích. */
-  private applyMove(from: { floor: number; slot: number } | null, floor: number, slot: number): void {
-    const ui = this.game.ui;
-    if (!from) {
-      if (!this.game.state.value.floors[floor]?.slots[slot]) return;
-      ui.tool.value = { kind: 'move', from: { floor, slot } };
-      ui.selected.value = { floor, slot };
-      return;
-    }
-    if (from.floor === floor && from.slot === slot) {
-      ui.tool.value = null;
-      ui.selected.value = null;
-      return;
-    }
-    const r = this.game.exec({
-      type: 'swapSlots',
-      floor: from.floor,
-      slot: from.slot,
-      toFloor: floor,
-      toSlot: slot,
-    });
-    if (r.ok) {
-      ui.tool.value = null;
-      ui.selected.value = null;
-    }
-  }
-
-  private onTap(target: PickTarget | null): void {
-    const ui = this.game.ui;
-    if (!target) {
-      ui.selected.value = null;
-      return;
-    }
-    if (target.kind === 'locked') {
-      ui.selected.value = null;
-      ui.panel.value = 'unlock';
-      return;
-    }
-    const { floor, slot } = target;
-    const state = this.game.state.value;
-    const content = state.floors[floor]?.slots[slot];
-    if (!content) {
-      // Ô trống: đặt chậu tốt nhất trong kho, nếu không có thì mở cửa hàng chậu.
-      ui.selected.value = null;
-      const uid = bestPotUid(state);
-      if (uid !== null) this.game.exec({ type: 'placePot', floor, slot, uid });
-      else this.game.events.emit({ type: 'needPot' });
-      return;
-    }
-    // Chạm vào ô: bắt sâu / thu hoạch nếu có việc; không có việc gì thì chọn ô để xem thông tin.
-    const swept = this.game.exec({ type: 'sweep', floor, slot }, { quiet: ['NOT_READY', 'NOTHING_TO_DO'] });
-    if (content.kind === 'machine') {
-      // Máy: lấy hàng xong (nếu có) rồi mở bảng điều khiển máy.
-      ui.selected.value = { floor, slot };
-      ui.panel.value = 'machine';
-      return;
-    }
-    if (swept.ok) {
-      const pot = asPot(this.game.state.value.floors[floor]?.slots[slot]);
-      if (!pot?.plant) ui.selected.value = null;
-      return;
-    }
-    if (swept.error === 'STORAGE_FULL') return;
-    const same = ui.selected.value?.floor === floor && ui.selected.value.slot === slot;
-    ui.selected.value = same ? null : { floor, slot };
+    this.onActivity();
+    this.active()?.scroller.scrollBy(-e.deltaY);
   }
 }

@@ -18,12 +18,38 @@ export class CameraScroller {
   private velocity = 0;
   private dragging = false;
   private initialized = false;
+  /** focusY đã lưu khi rời màn (mỗi màn có camera riêng nhưng dùng chung SceneManager). */
+  private savedFocus: number | null = null;
 
   constructor(
     private readonly scene: SceneManager,
     private readonly bounds: () => { bottom: number; top: number },
     private readonly insets: () => ScreenInsets,
+    /** Vị trí nhìn lúc đầu; mặc định là đáy khu vực cuộn. */
+    private readonly home: (range: { min: number; max: number }) => number = (r) => r.min,
   ) {}
+
+  /** Camera đang trôi theo quán tính hoặc bật lại từ mép. */
+  get moving(): boolean {
+    if (this.dragging) return true;
+    if (this.velocity !== 0) return true;
+    const { min, max } = this.range();
+    const y = this.scene.focusY;
+    return y < min - 0.001 || y > max + 0.001;
+  }
+
+  /** Rời màn: nhớ vị trí camera. */
+  save(): void {
+    this.savedFocus = this.scene.focusY;
+    this.velocity = 0;
+    this.dragging = false;
+  }
+
+  /** Vào lại màn: trả camera về vị trí đã nhớ. */
+  restore(): void {
+    if (this.savedFocus !== null) this.scene.focusY = this.savedFocus;
+    this.scene.updateCamera();
+  }
 
   /** Khoảng focusY hợp lệ để khu vườn nằm trong phần màn hình không bị UI che. */
   range(): { min: number; max: number } {
@@ -73,7 +99,7 @@ export class CameraScroller {
   update(dt: number): void {
     const { min, max } = this.range();
     if (!this.initialized) {
-      this.scene.focusY = min;
+      this.scene.focusY = Math.min(max, Math.max(min, this.home({ min, max })));
       this.initialized = true;
     }
     if (!this.dragging) {

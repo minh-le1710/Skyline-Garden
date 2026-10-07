@@ -36,6 +36,7 @@ export type Tool =
 
 export type PanelId =
   'shop' | 'storage' | 'orders' | 'unlock' | 'machine' | 'quests' | 'balloon' | 'settings';
+export type ScreenId = 'garden' | 'mine';
 export type ShopTab = 'seeds' | 'pots' | 'machines' | 'upgrades';
 export type StorageTab = 'crops' | 'goods' | 'materials' | 'pots';
 
@@ -84,6 +85,10 @@ export class Game {
     shopTab: signal<ShopTab>('seeds'),
     storageTab: signal<StorageTab>('crops'),
     selected: signal<SlotRef | null>(null),
+    /** Màn 3D đang xem (ScreenHost chuyển màn theo signal này). */
+    screen: signal<ScreenId>('garden'),
+    /** Hiệu ứng mây che khi chuyển màn: 'in' đang che lại, 'out' đang mở ra. */
+    transition: signal<'none' | 'in' | 'out'>('none'),
   };
 
   /** Khác null thì game tạm dừng: không lưu, giao diện hiện thông báo chặn. */
@@ -165,8 +170,36 @@ export class Game {
     window.addEventListener('pagehide', flush);
     // Tab khác ghi save (sự kiện 'storage' chỉ báo thay đổi từ tab khác): dừng ngay, không ghi đè.
     window.addEventListener('storage', (e) => {
-      if (e.key === SAVE_KEY && e.newValue !== this.lastWritten) this.block('otherTab');
+      if (e.key === SAVE_KEY && e.newValue !== this.lastWritten) this.externalWrite(e.newValue);
     });
+  }
+
+  /** Tab này đang giữ khóa chơi (Web Locks). */
+  private lockHeld = false;
+
+  /**
+   * Vừa giành được khóa: tab cũ có thể đã kịp lưu một lần trong lúc tab này đang tải.
+   * Bản đó mới hơn bản tab này đọc lúc đầu, nên nhận lấy thay vì ghi đè hay tự dừng.
+   */
+  lockAcquired(): void {
+    this.lockHeld = true;
+    const raw = this.storage?.getItem(SAVE_KEY) ?? null;
+    if (raw !== this.lastWritten) this.externalWrite(raw);
+  }
+
+  /**
+   * Save bị tab khác ghi. Nếu tab này giữ khóa thì người ghi là tab cũ chưa kịp biết mình mất khóa
+   * (nó sẽ dừng ngay sau đó): nhận bản mới hơn. Không thì tab này mới là tab cũ: dừng lại.
+   */
+  private externalWrite(raw: string | null): void {
+    if (this.blocked.value) return;
+    const loaded = this.lockHeld && raw !== null ? readSave(raw) : null;
+    if (loaded?.status !== 'ok') {
+      this.block('otherTab');
+      return;
+    }
+    this.lastWritten = raw;
+    this.replaceState(loaded.state, 'sync');
   }
 
   /** Bật ở chế độ debug: kiểm tra bất biến sau mỗi lệnh và báo lỗi ra console (test E2E bắt được). */
@@ -225,8 +258,9 @@ export class Game {
     this.saveTimer = undefined;
     if (!this.storage || this.blocked.value) return;
     try {
-      if (this.storage.getItem(SAVE_KEY) !== this.lastWritten) {
-        this.block('otherTab');
+      const current = this.storage.getItem(SAVE_KEY);
+      if (current !== this.lastWritten) {
+        this.externalWrite(current);
         return;
       }
       const json = serialize({ ...this.state.value, lastSeenAt: this.clock.now() });

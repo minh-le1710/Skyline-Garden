@@ -27,7 +27,7 @@ import {
   type SlotContent,
 } from '../game';
 import type { AppEvent, Game } from '../core/Game';
-import { t } from '../i18n';
+import { getLocale, t } from '../i18n';
 import { cloudGeometry, seeded, type Puff } from './clouds';
 import { FLOOR_BOTTOM, FLOOR_TOP, GARDEN_WIDTH, floorY, slotPosition } from './layout';
 import { toon } from './materials';
@@ -353,6 +353,10 @@ export class GardenView {
   private particles: Particle[] = [];
   private readonly particleGeometry = new TetrahedronGeometry(0.08);
   private synced = false;
+  /** Ngôn ngữ của biển báo tầng khóa (đổi ngôn ngữ thì vẽ lại chữ). */
+  private signLocale = '';
+  /** Hệ số số hạt theo mức đồ họa. */
+  particleScale = 1;
 
   constructor(
     scene: Scene,
@@ -381,7 +385,8 @@ export class GardenView {
 
   update(dt: number, now: number, time: number): void {
     const state = this.game.state.value;
-    if (state.floors.length !== this.renderedFloors) this.rebuildFloors(state);
+    if (state.floors.length !== this.renderedFloors || getLocale() !== this.signLocale)
+      this.rebuildFloors(state);
     for (let f = 0; f < this.floors.length; f++) {
       const slots = state.floors[f]!.slots;
       const view = this.floors[f]!;
@@ -424,6 +429,12 @@ export class GardenView {
       this.group.add(this.locked.group);
     }
     this.renderedFloors = state.floors.length;
+    this.signLocale = getLocale();
+  }
+
+  /** Còn hạt hiệu ứng đang bay. */
+  get busy(): boolean {
+    return this.particles.length > 0;
   }
 
   private onEvent(event: AppEvent): void {
@@ -437,7 +448,8 @@ export class GardenView {
 
   private burst(origin: Vector3, color: number): void {
     const colors = [color, 0xffe066, 0xffffff];
-    for (let i = 0; i < 12; i++) {
+    const count = Math.round(12 * this.particleScale);
+    for (let i = 0; i < count; i++) {
       const mesh = new Mesh(this.particleGeometry, toon(colors[i % colors.length]!));
       mesh.position.copy(origin);
       const a = Math.random() * Math.PI * 2;

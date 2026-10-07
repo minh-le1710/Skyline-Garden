@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef } from 'preact/hooks';
+import { useLayoutEffect, useRef } from 'preact/hooks';
 import { t } from '../i18n';
 
 interface SheetProps {
@@ -18,13 +18,17 @@ const FOCUSABLE = 'button:not([disabled]), [href], input, select, textarea, [tab
  */
 export function Sheet({ title, onClose, children, testId, class: extra = '' }: SheetProps) {
   const ref = useRef<HTMLElement>(null);
-  useEffect(() => {
+  // onClose thường là hàm mới mỗi lần vẽ: giữ bản mới nhất trong ref để không gắn lại phím mỗi lần vẽ.
+  const close = useRef(onClose);
+  close.current = onClose;
+  // Layout effect: phím Escape có tác dụng ngay khi bảng vừa hiện, không đợi khung hình sau.
+  useLayoutEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     ref.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        close.current();
       } else if (e.key === 'Tab' && ref.current) {
         const items = [...ref.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
         if (!items.length) return;
@@ -44,7 +48,7 @@ export function Sheet({ title, onClose, children, testId, class: extra = '' }: S
       window.removeEventListener('keydown', onKey, true);
       previous?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div class="sheet-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>

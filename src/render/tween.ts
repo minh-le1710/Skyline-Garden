@@ -22,6 +22,11 @@ interface Tween {
 export class Tweens {
   private list: Tween[] = [];
 
+  /** Còn tween đang chạy. */
+  get busy(): boolean {
+    return this.list.length > 0;
+  }
+
   add(duration: number, update: (k: number) => void, ease: Ease = easeOutCubic): Promise<void> {
     return new Promise((resolve) => {
       // Giảm chuyển động: nhảy thẳng tới trạng thái cuối.

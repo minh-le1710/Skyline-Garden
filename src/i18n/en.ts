@@ -276,6 +276,7 @@ export const en: Record<MessageKey, string> = {
   'settings.quality.auto': 'Auto',
   'settings.quality.low': 'Low',
   'settings.quality.high': 'High',
+  'settings.qualityHint': 'Anti-aliasing changes after you reload the page.',
   'settings.reduceMotion': 'Reduce motion',
   'settings.data': 'Data',
   'settings.export': 'Export save',

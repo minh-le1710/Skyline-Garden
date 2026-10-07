@@ -45,6 +45,8 @@ export interface DebugApi {
   slotScreenPosition(floor: number, slot: number): { x: number; y: number };
   scrollToFloor(floor: number): void;
   renderInfo(): { calls: number; triangles: number };
+  /** Số khung đã vẽ thật (FrameScheduler) và DPR hiện tại. */
+  frameStats(): { rendered: number; dpr: number };
 }
 
 declare global {
@@ -59,6 +61,7 @@ export function installDebug(
   scene: SceneManager,
   garden: GardenView,
   scroller: CameraScroller,
+  extra: { frameStats: () => { rendered: number; dpr: number } },
 ): DebugApi {
   game.debugChecks = true;
   /** Sửa state trực tiếp. Từ chối (ném lỗi) nếu kết quả vi phạm bất biến, để không lưu một save "hỏng". */
@@ -137,6 +140,7 @@ export function installDebug(
       const { calls, triangles } = scene.renderer.info.render;
       return { calls, triangles };
     },
+    frameStats: extra.frameStats,
   };
   window.__skyline = api;
   console.info('[Skyline Garden] Debug: window.__skyline');

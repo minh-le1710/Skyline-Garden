@@ -74,6 +74,11 @@ export class SkyBackground {
     }
   }
 
+  /** Mức đồ họa thấp chỉ giữ một phần mây nền. */
+  setCloudCount(n: number): void {
+    this.clouds.forEach((c, i) => (c.mesh.visible = i < n));
+  }
+
   /** Mây xa dịch theo camera một phần để tạo chiều sâu (parallax). */
   update(dt: number, focusY: number): void {
     this.group.position.y = focusY * 0.6;
