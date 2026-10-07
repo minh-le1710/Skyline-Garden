@@ -25,7 +25,9 @@ import {
   isPlantId,
   isPositiveInt,
   isPotId,
+  isTutorialStep,
 } from './ids';
+import { advanceTutorial, skipTutorial } from './tutorial';
 import { recipeDef } from './machines';
 import {
   buildMachine,
@@ -48,6 +50,7 @@ import type {
   PlantId,
   PotId,
   RecipeId,
+  TutorialStep,
 } from './types';
 
 /**
@@ -85,7 +88,9 @@ export type Command =
   | { type: 'rerollQuest'; index: number }
   | { type: 'fillCrate'; index: number }
   | { type: 'sendBalloon' }
-  | { type: 'claimAchievement'; id: AchievementId };
+  | { type: 'claimAchievement'; id: AchievementId }
+  | { type: 'advanceTutorial'; from: TutorialStep }
+  | { type: 'skipTutorial' };
 
 export type CommandType = Command['type'];
 type CommandOf<T extends CommandType> = Extract<Command, { type: T }>;
@@ -161,6 +166,10 @@ export function applyCommand(s: GameState, c: Command, now: number): ActionResul
       return sendBalloon(s, now);
     case 'claimAchievement':
       return claimAchievement(s, c.id, now);
+    case 'advanceTutorial':
+      return advanceTutorial(s, c.from, now);
+    case 'skipTutorial':
+      return skipTutorial(s, now);
   }
 }
 
@@ -188,6 +197,7 @@ const FIELD = {
   qty: isPositiveInt,
   machineId: isMachineId,
   achievementId: isAchievementId,
+  tutorialStep: isTutorialStep,
   recipe: (v: unknown) => typeof v === 'string' && recipeDef(v as RecipeId) !== null,
 } satisfies Record<string, FieldCheck>;
 
@@ -223,6 +233,8 @@ const SPECS: { [T in CommandType]: Record<Exclude<keyof CommandOf<T>, 'type'>, F
   fillCrate: { index: FIELD.index },
   sendBalloon: {},
   claimAchievement: { id: FIELD.achievementId },
+  advanceTutorial: { from: FIELD.tutorialStep },
+  skipTutorial: {},
 };
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>

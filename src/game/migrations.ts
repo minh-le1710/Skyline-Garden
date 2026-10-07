@@ -131,11 +131,20 @@ function v4to5(raw: Raw): Raw {
   return { ...raw, achievements: {} };
 }
 
+// ---------- v5 → v6: hướng dẫn chơi ----------
+
+function v5to6(raw: Raw): Raw {
+  // Người đã chơi (có XP hoặc lên cấp) không phải đi lại từ đầu.
+  const played = (raw.xp as number) > 0 || (raw.level as number) > 1;
+  return { ...raw, tutorial: { step: played ? 'done' : 'welcome', progress: 0 } };
+}
+
 export const MIGRATIONS: Record<number, (raw: RawSave) => RawSave> = {
   1: v1to2,
   2: v2to3,
   3: v3to4,
   4: v4to5,
+  5: v5to6,
 };
 
 /** Nâng `raw` lên `target`. Trả về null nếu thiếu migration. */

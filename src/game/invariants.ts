@@ -14,6 +14,7 @@ import {
   isPositiveInt,
   isPotId,
   isRarity,
+  isTutorialStep,
 } from './ids';
 import { recipeDef } from './machines';
 import { levelForXp } from './progression';
@@ -146,6 +147,11 @@ export function checkStructure(s: GameState): string[] {
       expect(ok, 'daily: nhiệm vụ không hợp lệ');
     }
   }
+
+  expect(
+    isTutorialStep(s.tutorial?.step) && isNonNegInt(s.tutorial?.progress),
+    'hướng dẫn: trạng thái không hợp lệ',
+  );
 
   const b = s.balloon;
   expect(isNonNegInt(b?.trips), 'khinh khí cầu: số chuyến không hợp lệ');

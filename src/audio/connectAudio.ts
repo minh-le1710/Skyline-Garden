@@ -47,6 +47,8 @@ export const SFX_FOR_EVENT: SfxForEvent = {
   questBonusClaimed: 'coin',
   achievementClaimed: 'coin',
   achievementUnlocked: 'fanfare',
+  tutorialDone: (e) => (e.skipped ? [] : ['fanfare']),
+  tutorialStep: 'select',
   questCompleted: 'chime',
   orderDiscarded: 'whoosh',
   balloonArrived: 'chime',

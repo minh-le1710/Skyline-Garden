@@ -2,6 +2,7 @@ import { commit } from './commit';
 import { balloonDue, runBalloon } from './balloon';
 import { dailyDue, runDaily } from './daily';
 import { dueOrderSlots, fillOrders } from './orders';
+import { runTutorialWaitGrow, tutorialWaitGrowDue } from './tutorial';
 import type { ActionResult, GameEvent, GameState } from './types';
 
 /**
@@ -19,6 +20,7 @@ const SYSTEMS: TickSystem[] = [
   { name: 'daily', isDue: dailyDue, run: runDaily },
   { name: 'orders', isDue: (s, now) => dueOrderSlots(s, now).length > 0, run: fillOrders },
   { name: 'balloon', isDue: balloonDue, run: runBalloon },
+  { name: 'tutorialWaitGrow', isDue: tutorialWaitGrowDue, run: runTutorialWaitGrow },
 ];
 
 /** Cập nhật theo thời gian. Trả về đúng object cũ nếu không có gì tới hạn (để không ghi log thừa). */

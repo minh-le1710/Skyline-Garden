@@ -37,3 +37,5 @@ export * from './config/levels';
 export * from './config/orders';
 export * from './achievements';
 export * from './config/achievements';
+export * from './tutorial';
+export * from './config/tutorial';

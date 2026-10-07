@@ -18,8 +18,12 @@ import { ScreenHost } from './render/ScreenHost';
 import { GardenScreen } from './render/screens/GardenScreen';
 import { App } from './ui/App';
 import { connectFeedback } from './ui/feedback';
+import { connectTutorial } from './ui/tutorial/TutorialController';
+import type { Projector } from './ui/tutorial/projector';
 import { loginModalOpen } from './ui/modals';
-import { loginClaimable } from './game';
+import { loginClaimable, tutorialActive } from './game';
+import { floorY, slotHitBox } from './render/layout';
+import { Vector3 } from 'three';
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -112,7 +116,34 @@ function boot(): void {
   game.events.on(() => scheduler.wake());
 
   uiRoot.textContent = '';
-  render(<App game={game} />, uiRoot);
+  // Vị trí ô chậu trên màn hình (cho lớp hướng dẫn): bao các góc hộp va chạm của ô sau khi chiếu.
+  const corner = new Vector3();
+  const projector: Projector = {
+    slotRect: (floor, slot) => {
+      const box = slotHitBox(floor, slot);
+      let x0 = Infinity;
+      let y0 = Infinity;
+      let x1 = -Infinity;
+      let y1 = -Infinity;
+      for (let i = 0; i < 8; i++) {
+        corner.set(
+          i & 1 ? box.max.x : box.min.x,
+          i & 2 ? box.max.y : box.min.y,
+          i & 4 ? box.max.z : box.min.z,
+        );
+        const p = scene.project(corner);
+        x0 = Math.min(x0, p.x);
+        y0 = Math.min(y0, p.y);
+        x1 = Math.max(x1, p.x);
+        y1 = Math.max(y1, p.y);
+      }
+      return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    },
+    focusFloor: (floor) => gardenScreen.scroller.scrollTo(floorY(floor)),
+  };
+  connectTutorial(game, projector);
+
+  render(<App game={game} projector={projector} />, uiRoot);
 
   // Khi mở khay hạt giống hay thẻ chậu, vùng dưới cao lên và camera trượt nhẹ để tầng dưới không bị che.
   const measure = () => {
@@ -149,8 +180,21 @@ function boot(): void {
   }
   game.start();
   initPwa(game);
-  // Quà đăng nhập tự mở một lần mỗi phiên. Ở chế độ debug (test) chỉ mở khi có `?modals`.
-  if (loginClaimable(game.state.value, game.clock.now()) && (!params.has('debug') || params.has('modals'))) {
+  // Chế độ debug (test E2E) bỏ qua hướng dẫn bằng lệnh thật, trừ khi có `?tutorial`; chơi lại cũng vậy.
+  if (params.has('debug') && !params.has('tutorial')) {
+    const skip = () => game.exec({ type: 'skipTutorial' }, { quiet: ['WRONG_STEP'] });
+    skip();
+    game.events.on((event) => {
+      if (event.type === 'stateReplaced' && event.reason === 'reset') skip();
+    });
+  }
+  // Quà đăng nhập tự mở một lần mỗi phiên (không chen vào lúc đang hướng dẫn).
+  // Ở chế độ debug (test) chỉ mở khi có `?modals`.
+  if (
+    loginClaimable(game.state.value, game.clock.now()) &&
+    !tutorialActive(game.state.value) &&
+    (!params.has('debug') || params.has('modals'))
+  ) {
     loginModalOpen.value = true;
   }
 

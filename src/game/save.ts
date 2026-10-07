@@ -87,6 +87,7 @@ function shapeProblems(d: Record<string, unknown>): string | null {
     'daily',
     'balloon',
     'achievements',
+    'tutorial',
   ];
   for (const key of required) if (!(key in d)) return `thiếu trường ${key}`;
   if (!Array.isArray(d.floors) || !d.floors.every((f) => isRecord(f) && Array.isArray(f.slots))) {
@@ -95,7 +96,7 @@ function shapeProblems(d: Record<string, unknown>): string | null {
   if (
     !Array.isArray(d.orders) ||
     !Array.isArray(d.potBag) ||
-    ![d.seeds, d.items, d.rng, d.stats, d.daily, d.balloon, d.achievements].every(isRecord)
+    ![d.seeds, d.items, d.rng, d.stats, d.daily, d.balloon, d.achievements, d.tutorial].every(isRecord)
   ) {
     return 'kho không hợp lệ';
   }

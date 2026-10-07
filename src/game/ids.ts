@@ -4,6 +4,7 @@ import { PLANTS } from './config/plants';
 import {
   ACHIEVEMENT_IDS,
   MACHINE_IDS,
+  TUTORIAL_STEPS,
   POT_IDS,
   RARITIES,
   type AchievementId,
@@ -14,6 +15,7 @@ import {
   type PlantId,
   type PotId,
   type Rarity,
+  type TutorialStep,
 } from './types';
 
 // Dữ liệu từ bên ngoài (save, server, URL) có thể chứa id lạ như "constructor" hay "__proto__".
@@ -30,6 +32,7 @@ export const isPotId = (id: unknown): id is PotId => inList(POT_IDS, id);
 export const isMachineId = (id: unknown): id is MachineId => inList(MACHINE_IDS, id);
 export const isRarity = (id: unknown): id is Rarity => inList(RARITIES, id);
 export const isAchievementId = (id: unknown): id is AchievementId => inList(ACHIEVEMENT_IDS, id);
+export const isTutorialStep = (id: unknown): id is TutorialStep => inList(TUTORIAL_STEPS, id);
 
 export const isInt = (n: unknown): n is number => typeof n === 'number' && Number.isInteger(n);
 export const isNonNegInt = (n: unknown): n is number => isInt(n) && n >= 0;

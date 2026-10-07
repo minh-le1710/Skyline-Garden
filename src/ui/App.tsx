@@ -2,6 +2,8 @@ import type { Game } from '../core/Game';
 import { BlockingNotice } from './BlockingNotice';
 import { ScreenTransition } from './ScreenTransition';
 import { UpdateBanner } from './UpdateBanner';
+import { ProjectorContext, type Projector } from './tutorial/projector';
+import { TutorialOverlay } from './tutorial/TutorialOverlay';
 import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
 import { MachinePanel } from './MachinePanel';
@@ -44,25 +46,28 @@ function Panels() {
   }
 }
 
-export function App({ game }: { game: Game }) {
+export function App({ game, projector }: { game: Game; projector: Projector }) {
   return (
     <GameContext.Provider value={game}>
-      <Hud />
-      <ToolBanner />
-      <Toasts />
-      <div class="bottom">
-        <PotInfo />
-        <Tray />
-        <Toolbar />
-      </div>
-      <Panels />
-      <LevelUpModal />
-      <ForgeReveal />
-      <LoginModal />
-      <FlyLayer />
-      <UpdateBanner />
-      <ScreenTransition />
-      <BlockingNotice />
+      <ProjectorContext.Provider value={projector}>
+        <Hud />
+        <ToolBanner />
+        <Toasts />
+        <div class="bottom">
+          <PotInfo />
+          <Tray />
+          <Toolbar />
+        </div>
+        <Panels />
+        <TutorialOverlay />
+        <LevelUpModal />
+        <ForgeReveal />
+        <LoginModal />
+        <FlyLayer />
+        <UpdateBanner />
+        <ScreenTransition />
+        <BlockingNotice />
+      </ProjectorContext.Provider>
     </GameContext.Provider>
   );
 }

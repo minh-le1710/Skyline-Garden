@@ -3,6 +3,7 @@ import { isBarnItem } from './config/items';
 import { orderSlotsForLevel } from './config/orders';
 import { PLANTS } from './config/plants';
 import { POT_STAT_CAPS } from './config/pots';
+import { FIRST_ORDER } from './config/tutorial';
 import { deriveSeed } from './rng';
 import {
   RNG_STREAMS,
@@ -22,7 +23,7 @@ import {
   type SlotContent,
 } from './types';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export function emptyFloor(): Floor {
   return { slots: Array.from({ length: SLOTS_PER_FLOOR }, () => null) };
@@ -68,14 +69,18 @@ export function createNewGame(now: number, seed: number): GameState {
     nextUid: uid,
     storageCapacity: START_STORAGE,
     storageUpgrades: 0,
-    // Đơn đầu tiên tới ngay khi vào game.
-    orders: Array.from({ length: orderSlotsForLevel(1) }, () => ({ order: null, readyAt: now })),
-    nextOrderId: 1,
+    // Đơn đầu tiên cố định (cho bước hướng dẫn giao hàng); các chỗ còn lại cú mang tới ngay.
+    orders: Array.from({ length: orderSlotsForLevel(1) }, (_, i) => ({
+      order: i === 0 ? { id: 1, ...structuredClone(FIRST_ORDER) } : null,
+      readyAt: now,
+    })),
+    nextOrderId: 2,
     rng: makeRngStreams(seed),
     stats: {},
     daily: { day: -1, quests: [], bonusClaimed: false, freeRerollUsed: false, loginDay: -1, loginCount: 0 },
     balloon: { phase: 'away', returnsAt: 0, trips: 0 },
     achievements: {},
+    tutorial: { step: 'welcome', progress: 0 },
   };
 }
 

@@ -87,6 +87,10 @@ export const ACHIEVEMENTS: Record<AchievementId, AchievementDef> = {
       { goal: 100, reward: { ruby: 20 } },
     ],
   },
+  first_steps: {
+    stat: 'tutorialDone',
+    tiers: [{ goal: 1, reward: { ruby: 2 } }],
+  },
   dedicated: {
     stat: 'questsCompleted',
     tiers: [

@@ -129,6 +129,28 @@ export const STAT_KEYS = [
 ] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
+/** Các bước hướng dẫn chơi lần đầu, theo thứ tự. */
+export const TUTORIAL_STEPS = [
+  'welcome',
+  'openTray',
+  'pickSeed',
+  'plantRow',
+  'waitGrow',
+  'harvest',
+  'openOrders',
+  'deliver',
+  'openShop',
+  'buySeeds',
+  'done',
+] as const;
+export type TutorialStep = (typeof TUTORIAL_STEPS)[number];
+
+export interface TutorialState {
+  step: TutorialStep;
+  /** Đếm trong bước hiện tại (vd. số cây đã trồng ở bước plantRow). */
+  progress: number;
+}
+
 /** Thành tựu. Thêm thành tựu mới không cần tăng version save (state lưu dạng map). */
 export const ACHIEVEMENT_IDS = [
   'green_thumb',
@@ -141,6 +163,7 @@ export const ACHIEVEMENT_IDS = [
   'potter',
   'balloonist',
   'dedicated',
+  'first_steps',
 ] as const;
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
 
@@ -314,6 +337,7 @@ export interface GameState {
   balloon: BalloonState;
   /** Số bậc đã nhận thưởng của mỗi thành tựu. */
   achievements: Counts<AchievementId>;
+  tutorial: TutorialState;
 }
 
 // ---------- Sự kiện và kết quả ----------
@@ -376,7 +400,10 @@ export type GameEvent =
   | { type: 'balloonSent'; completed: boolean; reward: Reward }
   /** Vừa đạt một bậc thành tựu (chưa nhận thưởng). `tier` tính từ 0. */
   | { type: 'achievementUnlocked'; id: AchievementId; tier: number }
-  | { type: 'achievementClaimed'; id: AchievementId; tier: number; reward: Reward };
+  | { type: 'achievementClaimed'; id: AchievementId; tier: number; reward: Reward }
+  | { type: 'tutorialStep'; step: TutorialStep }
+  /** Xong hướng dẫn. Bỏ qua thì không có thưởng. */
+  | { type: 'tutorialDone'; skipped: boolean; reward: Reward | null };
 
 export const ACTION_ERRORS = [
   'INVALID',
@@ -415,6 +442,7 @@ export const ACTION_ERRORS = [
   'BALLOON_AWAY',
   'CRATE_FILLED',
   'NOT_ACHIEVED',
+  'WRONG_STEP',
 ] as const;
 export type ActionError = (typeof ACTION_ERRORS)[number];
 

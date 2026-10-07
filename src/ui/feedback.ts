@@ -167,6 +167,12 @@ export function connectFeedback(
       case 'achievementClaimed':
         flyReward(event.reward);
         break;
+      case 'tutorialDone':
+        if (event.reward) {
+          showToast(t('toast.tutorialDone'), 'success', 4000);
+          flyReward(event.reward);
+        }
+        break;
       case 'achievementUnlocked':
         showToast(
           t('toast.achievementUnlocked', { name: t(`ach.${event.id}.name` as const), tier: event.tier + 1 }),
