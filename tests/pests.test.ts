@@ -63,7 +63,8 @@ describe('tung số lúc trồng', () => {
 
   it('chỉ số "được mùa" của chậu cho thêm 1 nông sản', () => {
     let bonus = 0;
-    for (let seed = 0; seed < 1000; seed++) if (rollPlanting(new Rng(seed), 'rose', T0, 1, 1, 30).bonusYield) bonus++;
+    for (let seed = 0; seed < 1000; seed++)
+      if (rollPlanting(new Rng(seed), 'rose', T0, 1, 1, 30).bonusYield) bonus++;
     expect(bonus / 1000).toBeGreaterThan(0.25);
     expect(bonus / 1000).toBeLessThan(0.35);
   });
