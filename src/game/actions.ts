@@ -21,24 +21,13 @@ import {
   remainingMs,
   storageUsed,
 } from './state';
-import type { ActionError, ActionResult, GameEvent, GameState, PlantId, PotId } from './types';
-
-// Mọi action là hàm thuần: kiểm tra trên state cũ, rồi sửa trên một bản sao.
-
-const fail = (error: ActionError): ActionResult => ({ ok: false, error });
-
-function commit(state: GameState, mutate: (draft: GameState, events: GameEvent[]) => void): ActionResult {
-  const draft = structuredClone(state);
-  const events: GameEvent[] = [];
-  mutate(draft, events);
-  return { ok: true, state: draft, events };
-}
-
-const isPositiveInt = (n: number): boolean => Number.isInteger(n) && n > 0;
+import { commit, fail } from './commit';
+import { isInt, isPlantId, isPositiveInt, isPotId } from './ids';
+import type { ActionResult, GameState, PlantId, PotId } from './types';
 
 export function buySeed(state: GameState, plantId: PlantId, qty: number): ActionResult {
+  if (!isPlantId(plantId) || !isPositiveInt(qty)) return fail('INVALID');
   const def = PLANTS[plantId];
-  if (!def || !isPositiveInt(qty)) return fail('INVALID');
   if (state.level < def.unlockLevel) return fail('LEVEL_TOO_LOW');
   const cost = def.seedPrice * qty;
   if (state.gold < cost) return fail('NOT_ENOUGH_GOLD');
@@ -50,8 +39,8 @@ export function buySeed(state: GameState, plantId: PlantId, qty: number): Action
 }
 
 export function buyPot(state: GameState, potId: PotId, qty = 1): ActionResult {
+  if (!isPotId(potId) || !isPositiveInt(qty)) return fail('INVALID');
   const def = POTS[potId];
-  if (!def || !isPositiveInt(qty)) return fail('INVALID');
   if (state.level < def.unlockLevel) return fail('LEVEL_TOO_LOW');
   const cost = def.price * qty;
   if (state.gold < cost) return fail('NOT_ENOUGH_GOLD');
@@ -64,7 +53,7 @@ export function buyPot(state: GameState, potId: PotId, qty = 1): ActionResult {
 
 export function placePot(state: GameState, floor: number, slot: number, potId: PotId): ActionResult {
   const current = getPot(state, floor, slot);
-  if (current === undefined || !POTS[potId]) return fail('INVALID');
+  if (current === undefined || !isPotId(potId)) return fail('INVALID');
   if (current !== null) return fail('SLOT_OCCUPIED');
   if (count(state.potStock, potId) <= 0) return fail('NO_POT_STOCK');
   return commit(state, (s, events) => {
@@ -82,7 +71,7 @@ export function plant(
   now: number,
 ): ActionResult {
   const pot = getPot(state, floor, slot);
-  if (pot === undefined || !PLANTS[plantId]) return fail('INVALID');
+  if (pot === undefined || !isPlantId(plantId)) return fail('INVALID');
   if (pot === null) return fail('NO_POT');
   if (pot.plant) return fail('SLOT_BUSY');
   if (count(state.seeds, plantId) <= 0) return fail('NO_SEED');
@@ -131,8 +120,8 @@ export function speedUp(state: GameState, floor: number, slot: number, now: numb
 }
 
 export function sellCrop(state: GameState, plantId: PlantId, qty: number): ActionResult {
+  if (!isPlantId(plantId) || !isPositiveInt(qty)) return fail('INVALID');
   const def = PLANTS[plantId];
-  if (!def || !isPositiveInt(qty)) return fail('INVALID');
   if (count(state.crops, plantId) < qty) return fail('NOT_ENOUGH_CROPS');
   const gold = def.sellPrice * qty;
   return commit(state, (s, events) => {
@@ -173,7 +162,7 @@ export function unlockFloor(state: GameState): ActionResult {
 }
 
 export function deliverOrder(state: GameState, index: number, now: number): ActionResult {
-  const slot = state.orders[index];
+  const slot = isInt(index) ? state.orders[index] : undefined;
   if (!slot) return fail('INVALID');
   const order = slot.order;
   if (!order) return fail('NO_ORDER');
@@ -188,7 +177,7 @@ export function deliverOrder(state: GameState, index: number, now: number): Acti
 }
 
 export function discardOrder(state: GameState, index: number, now: number): ActionResult {
-  const slot = state.orders[index];
+  const slot = isInt(index) ? state.orders[index] : undefined;
   if (!slot) return fail('INVALID');
   if (!slot.order) return fail('NO_ORDER');
   return commit(state, (s, events) => {

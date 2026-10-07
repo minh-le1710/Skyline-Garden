@@ -1,16 +1,3 @@
-/** Đồng hồ game. `offsetMs` cho phép tua nhanh khi debug/test mà không đụng tới logic. */
-export class Clock {
-  offsetMs = 0;
-
-  now(): number {
-    return Date.now() + this.offsetMs;
-  }
-
-  skip(ms: number): void {
-    this.offsetMs += ms;
-  }
-}
-
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000));
   const h = Math.floor(total / 3600);

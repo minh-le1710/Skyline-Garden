@@ -85,23 +85,25 @@ export type GameEvent =
   | { type: 'ordersArrived'; count: number }
   | { type: 'levelUp'; level: number; gold: number; ruby: number };
 
-export type ActionError =
-  | 'INVALID'
-  | 'NOT_ENOUGH_GOLD'
-  | 'NOT_ENOUGH_RUBY'
-  | 'LEVEL_TOO_LOW'
-  | 'NO_SEED'
-  | 'NO_POT'
-  | 'NO_POT_STOCK'
-  | 'SLOT_OCCUPIED'
-  | 'SLOT_BUSY'
-  | 'NOTHING_PLANTED'
-  | 'NOT_READY'
-  | 'ALREADY_READY'
-  | 'STORAGE_FULL'
-  | 'NOT_ENOUGH_CROPS'
-  | 'NO_ORDER'
-  | 'MAX_FLOORS';
+export const ACTION_ERRORS = [
+  'INVALID',
+  'NOT_ENOUGH_GOLD',
+  'NOT_ENOUGH_RUBY',
+  'LEVEL_TOO_LOW',
+  'NO_SEED',
+  'NO_POT',
+  'NO_POT_STOCK',
+  'SLOT_OCCUPIED',
+  'SLOT_BUSY',
+  'NOTHING_PLANTED',
+  'NOT_READY',
+  'ALREADY_READY',
+  'STORAGE_FULL',
+  'NOT_ENOUGH_CROPS',
+  'NO_ORDER',
+  'MAX_FLOORS',
+] as const;
+export type ActionError = (typeof ACTION_ERRORS)[number];
 
 export type ActionResult =
   { ok: true; state: GameState; events: GameEvent[] } | { ok: false; error: ActionError };

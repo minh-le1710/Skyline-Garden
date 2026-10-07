@@ -1,0 +1,51 @@
+name: Pages
+
+# Đăng bản web lên GitHub Pages sau khi CI xanh trên nhánh main, hoặc chạy tay (Actions → Pages → Run workflow).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx vite build
+        env:
+          VITE_BUILD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          # Địa chỉ server online (tùy chọn): đặt biến SKYLINE_SERVER_URL trong Settings → Variables.
+          VITE_SERVER_URL: ${{ vars.SKYLINE_SERVER_URL }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

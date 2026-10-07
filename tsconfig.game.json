@@ -1,0 +1,9 @@
+{
+  // Chứng minh logic game không phụ thuộc DOM hay Node, để server dùng lại được.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "types": []
+  },
+  "include": ["src/game"]
+}

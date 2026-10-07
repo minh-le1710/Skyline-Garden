@@ -4,7 +4,11 @@ import type { GameState } from './types';
 
 export const SAVE_KEY = 'skyline-garden/save';
 
-type KeyValueStore = Pick<Storage, 'getItem' | 'setItem'>;
+/** Kho key-value tối giản (localStorage trên trình duyệt, Map trong test, file trên server). */
+export interface KeyValueStore {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
 
 /**
  * Migration theo version: MIGRATIONS[n] nâng save từ version n lên n + 1.

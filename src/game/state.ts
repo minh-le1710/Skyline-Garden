@@ -10,7 +10,7 @@ export function emptyFloor(): Floor {
   return { slots: Array.from({ length: SLOTS_PER_FLOOR }, () => null) };
 }
 
-export function createNewGame(now: number, seed: number = Math.floor(Math.random() * 2 ** 32)): GameState {
+export function createNewGame(now: number, seed: number): GameState {
   const floors = START.potsPerFloor.map((pots) => {
     const floor = emptyFloor();
     for (let i = 0; i < pots; i++) floor.slots[i] = { potId: 'clay', plant: null };
@@ -37,7 +37,8 @@ export function createNewGame(now: number, seed: number = Math.floor(Math.random
   };
 }
 
-export const count = <K extends string>(counts: Counts<K>, key: K): number => counts[key] ?? 0;
+export const count = <K extends string>(counts: Counts<K>, key: K): number =>
+  Object.hasOwn(counts, key) ? (counts[key] ?? 0) : 0;
 
 export function addCount<K extends string>(counts: Counts<K>, key: K, delta: number): void {
   const next = (counts[key] ?? 0) + delta;
@@ -48,7 +49,9 @@ export function addCount<K extends string>(counts: Counts<K>, key: K, delta: num
 export const storageUsed = (state: GameState): number =>
   Object.values(state.crops).reduce<number>((sum, n) => sum + (n ?? 0), 0);
 
+/** Ô tại (floor, slot); `undefined` nếu chỉ số không hợp lệ (kể cả số thực, số âm). */
 export function getPot(state: GameState, floor: number, slot: number): Pot | null | undefined {
+  if (!Number.isInteger(floor) || !Number.isInteger(slot) || floor < 0 || slot < 0) return undefined;
   return state.floors[floor]?.slots[slot];
 }
 

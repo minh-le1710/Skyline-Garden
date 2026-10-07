@@ -1,0 +1,11 @@
+{
+  "$comment": "Giới hạn dung lượng sau gzip (KB). Chỉ được nới khi có lý do, ghi vào commit.",
+  "chunks": {
+    "three": 165,
+    "preact": 15,
+    "index": 100
+  },
+  "lazyChunk": 40,
+  "css": 15,
+  "initialJs": 280
+}

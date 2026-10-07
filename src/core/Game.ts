@@ -1,6 +1,5 @@
 import { signal, type Signal } from '@preact/signals-core';
 import {
-  Clock,
   createNewGame,
   loadGame,
   offlineSummary,
@@ -13,7 +12,10 @@ import {
   type PlantId,
   type PotId,
 } from '../game';
+import { Clock } from './Clock';
 import { EventBus } from './EventBus';
+
+const randomSeed = (): number => Math.floor(Math.random() * 2 ** 32);
 
 export type Tool = { kind: 'seed'; plantId: PlantId } | { kind: 'pot'; potId: PotId } | { kind: 'harvest' };
 
@@ -64,7 +66,7 @@ export class Game {
   constructor(private readonly storage: Storage | null) {
     const now = this.clock.now();
     const saved = storage ? loadGame(storage) : null;
-    let state = saved ?? createNewGame(now);
+    let state = saved ?? createNewGame(now, randomSeed());
     if (saved) {
       const summary = offlineSummary(saved, now);
       if (summary.readyWhileAway > 0) this.pendingWelcome = { type: 'welcomeBack', ...summary };
@@ -125,7 +127,8 @@ export class Game {
 
   reset(): void {
     this.clock.offsetMs = 0;
-    this.state.value = createNewGame(this.clock.now());
+    this.clock.resetMonotonic();
+    this.state.value = createNewGame(this.clock.now(), randomSeed());
     this.ui.tool.value = null;
     this.ui.selected.value = null;
     this.ui.panel.value = null;

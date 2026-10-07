@@ -136,3 +136,24 @@ describe('cửa hàng và kho', () => {
     expect(s.gold).toBe(800);
   });
 });
+
+describe('id lạ từ dữ liệu bên ngoài', () => {
+  it('không làm hỏng state với id kế thừa từ Object', () => {
+    const s = newGame();
+    s.crops = { rose: 3 };
+    for (const id of ['constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+      expect(errorOf(sellCrop(s, id as never, 1))).toBe('INVALID');
+      expect(errorOf(buySeed(s, id as never, 1))).toBe('INVALID');
+      expect(errorOf(buyPot(s, id as never))).toBe('INVALID');
+      expect(errorOf(plant(s, 0, 0, id as never, T0))).toBe('INVALID');
+      expect(errorOf(placePot(s, 1, 4, id as never))).toBe('INVALID');
+    }
+  });
+
+  it('từ chối chỉ số ô không phải số nguyên', () => {
+    const s = newGame();
+    expect(errorOf(plant(s, 0.5, 0, 'rose', T0))).toBe('INVALID');
+    expect(errorOf(plant(s, 0, -1, 'rose', T0))).toBe('INVALID');
+    expect(errorOf(plant(s, Number.NaN, 0, 'rose', T0))).toBe('INVALID');
+  });
+});
