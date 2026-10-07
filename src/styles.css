@@ -1346,3 +1346,33 @@ h3 {
 .achievement-foot .reward-chips {
   flex: 1;
 }
+
+/* Bản cập nhật mới (PWA): nằm ngay dưới HUD, không che hàng chip. */
+.update-banner {
+  position: absolute;
+  top: calc(var(--hud-bottom, calc(100px + var(--safe-top))) + 6px);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: max-content;
+  max-width: calc(100% - 16px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+  background: rgba(47, 69, 102, 0.92);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+}
+.update-banner button {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+}

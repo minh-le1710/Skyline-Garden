@@ -3,6 +3,7 @@ import { BACKUP_KEY, readSave, serialize } from '../game';
 import { LOCALES, type Locale, type Quality } from '../core/settings';
 import { t } from '../i18n';
 import { hasHaptics } from '../platform/haptics';
+import { promptInstall, pwa } from '../platform/pwa';
 import { useGame } from './context';
 import { showToast } from './feedback';
 import { ConfirmDialog, Sheet } from './Sheet';
@@ -171,6 +172,11 @@ export function SettingsPanel() {
             onChange={(e) => void pickFile((e.target as HTMLInputElement).files?.[0])}
           />
         </label>
+        {pwa.canInstall.value && (
+          <button class="btn primary" onClick={() => void promptInstall()} data-testid="install-app">
+            📲 {t('settings.install')}
+          </button>
+        )}
         <button class="btn danger" onClick={() => setConfirm({ kind: 'reset' })} data-testid="reset-game">
           {t('settings.reset')}
         </button>

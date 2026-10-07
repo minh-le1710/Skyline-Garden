@@ -1,12 +1,17 @@
 import { defineConfig } from 'vitest/config';
 import preact from '@preact/preset-vite';
+import { iconsPlugin } from './build/icons.ts';
+import { pwaPlugin } from './build/pwa.ts';
 
-export default defineConfig({
+const buildSha = process.env.VITE_BUILD_SHA ?? 'dev';
+
+export default defineConfig(({ mode }) => ({
   // Đường dẫn tương đối để build chạy được ở GitHub Pages hoặc thư mục con bất kỳ.
   base: './',
-  plugins: [preact()],
+  // Bản native (Capacitor, `--mode native`) không cần service worker.
+  plugins: [preact(), iconsPlugin(), ...(mode === 'native' ? [] : pwaPlugin({ buildSha }))],
   define: {
-    __BUILD_SHA__: JSON.stringify(process.env.VITE_BUILD_SHA ?? 'dev'),
+    __BUILD_SHA__: JSON.stringify(buildSha),
   },
   server: { host: true },
   build: {
@@ -28,4 +33,4 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     environment: 'node',
   },
-});
+}));

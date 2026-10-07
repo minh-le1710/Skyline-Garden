@@ -7,6 +7,7 @@ import { reduceMotion } from './core/motion';
 import { LOCALES, SettingsStore, defaultSettings, type Locale } from './core/settings';
 import { holdTabLock } from './core/tabLock';
 import { installDebug, type DebugApi } from './debug';
+import { initPwa } from './platform/pwa';
 import { getLocale, setLocale, t } from './i18n';
 import type { ScreenInsets } from './input/CameraScroller';
 import { InputController } from './input/InputController';
@@ -147,6 +148,7 @@ function boot(): void {
     );
   }
   game.start();
+  initPwa(game);
   // Quà đăng nhập tự mở một lần mỗi phiên. Ở chế độ debug (test) chỉ mở khi có `?modals`.
   if (loginClaimable(game.state.value, game.clock.now()) && (!params.has('debug') || params.has('modals'))) {
     loginModalOpen.value = true;

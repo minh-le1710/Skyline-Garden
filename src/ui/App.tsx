@@ -1,6 +1,7 @@
 import type { Game } from '../core/Game';
 import { BlockingNotice } from './BlockingNotice';
 import { ScreenTransition } from './ScreenTransition';
+import { UpdateBanner } from './UpdateBanner';
 import { GameContext, useGame } from './context';
 import { Hud } from './Hud';
 import { MachinePanel } from './MachinePanel';
@@ -59,6 +60,7 @@ export function App({ game }: { game: Game }) {
       <ForgeReveal />
       <LoginModal />
       <FlyLayer />
+      <UpdateBanner />
       <ScreenTransition />
       <BlockingNotice />
     </GameContext.Provider>
